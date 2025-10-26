@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Assessment Simulator - ISO 15939</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: 'hsl(var(--primary))',
+                        'primary-foreground': 'hsl(var(--primary-foreground))',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-foreground transition-colors duration-300">
+    <!-- Header -->
+    <header class="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="text-xl font-bold text-primary">ISO 15939</a>
+                <nav class="hidden md:flex gap-6">
+                    <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
+                    <a href="simulator.html" class="text-sm font-medium text-primary">Simulator</a>
+                    <a href="measurement.html" class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
+                </nav>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-lg hover:bg-accent transition-colors">
+                <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium">Step <span id="current-step">1</span> of 4</span>
+                <span class="text-sm text-muted-foreground" id="step-title">Define Quality Dimensions</span>
+            </div>
+            <div class="h-2 bg-accent rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full bg-primary transition-all duration-300" style="width: 25%"></div>
+            </div>
+        </div>
+
+        <!-- Step Navigation -->
+        <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
+            <button class="step-nav-btn active" data-step="1">
+                <span class="font-semibold">1</span>
+                <span class="text-xs">Define</span>
+            </button>
+            <button class="step-nav-btn" data-step="2">
+                <span class="font-semibold">2</span>
+                <span class="text-xs">Plan</span>
+            </button>
+            <button class="step-nav-btn" data-step="3">
+                <span class="font-semibold">3</span>
+                <span class="text-xs">Collect</span>
+            </button>
+            <button class="step-nav-btn" data-step="4">
+                <span class="font-semibold">4</span>
+                <span class="text-xs">Analyse</span>
+            </button>
+        </div>
+
+        <!-- Step Content -->
+        <div id="step-content" class="min-h-[500px]">
+            <!-- Step 1: Define -->
+            <div id="step-1" class="step-content">
+                <div class="bg-card border border-border rounded-lg p-6 mb-6">
+                    <h2 class="text-2xl font-bold mb-4">Define Quality Dimensions</h2>
+                    <p class="text-muted-foreground mb-6">Select a case study or choose individual quality dimensions to assess.</p>
+                    
+                    <!-- Case Studies -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Case Studies</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="case-study-card border-2 border-border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                                <h4 class="font-semibold mb-2">E-commerce Platform</h4>
+                                <p class="text-sm text-muted-foreground mb-3">Assess an online shopping platform focusing on performance, security, and usability.</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded">Performance</span>
+                                    <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded">Security</span>
+                                    <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded">Usability</span>
+                                </div>
+                            </div>
+                            <div class="case-study-card border-2 border-border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                                <h4 class="font-semibold mb-2">Mobile Banking App</h4>
+                                <p class="text-sm text-muted-foreground mb-3">Evaluate a financial application with emphasis on security, reliability, and user experience.</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded">Security</span>
+                                    <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded">Reliability</span>
+                                    <span class="text-xs px-2 py-1 bg-primary/10 text-primary rounded">Usability</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quality Dimensions -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Or Select Individual Dimensions</h3>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="functionality">
+                                <span class="font-medium">Functionality</span>
+                            </label>
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="reliability">
+                                <span class="font-medium">Reliability</span>
+                            </label>
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="usability">
+                                <span class="font-medium">Usability</span>
+                            </label>
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="efficiency">
+                                <span class="font-medium">Efficiency</span>
+                            </label>
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="maintainability">
+                                <span class="font-medium">Maintainability</span>
+                            </label>
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="portability">
+                                <span class="font-medium">Portability</span>
+                            </label>
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="security">
+                                <span class="font-medium">Security</span>
+                            </label>
+                            <label class="dimension-checkbox flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                <input type="checkbox" class="w-4 h-4" value="compatibility">
+                                <span class="font-medium">Compatibility</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Plan -->
+            <div id="step-2" class="step-content hidden">
+                <div class="bg-card border border-border rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-4">Assign Weights to Dimensions</h2>
+                    <p class="text-muted-foreground mb-6">Distribute importance weights across selected quality dimensions (total must equal 100%).</p>
+                    
+                    <div id="weights-container" class="space-y-4 mb-6">
+                        <!-- Weights will be dynamically added here -->
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-accent rounded-lg">
+                        <span class="font-semibold">Total Weight:</span>
+                        <span id="total-weight" class="text-2xl font-bold text-primary">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Collect -->
+            <div id="step-3" class="step-content hidden">
+                <div class="bg-card border border-border rounded-lg p-6">
+                    <h2 class="text-2xl font-bold mb-4">Collect Metric Values</h2>
+                    <p class="text-muted-foreground mb-6">Enter the measured values for each quality dimension (scale: 0-100).</p>
+                    
+                    <div id="metrics-container" class="space-y-6">
+                        <!-- Metrics will be dynamically added here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Analyse -->
+            <div id="step-4" class="step-content hidden">
+                <div class="space-y-6">
+                    <div class="bg-card border border-border rounded-lg p-6">
+                        <h2 class="text-2xl font-bold mb-4">Analysis Results</h2>
+                        <p class="text-muted-foreground mb-6">Comprehensive quality assessment based on your inputs.</p>
+                        
+                        <!-- Overall Score -->
+                        <div class="bg-primary/10 border border-primary/20 rounded-lg p-6 mb-6 text-center">
+                            <div class="text-sm text-muted-foreground mb-2">Overall Quality Score</div>
+                            <div id="overall-score" class="text-5xl font-bold text-primary mb-2">0</div>
+                            <div id="quality-rating" class="text-lg font-medium">Calculating...</div>
+                        </div>
+
+                        <!-- Radar Chart -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-4">Quality Dimensions Overview</h3>
+                            <div class="bg-background p-4 rounded-lg">
+                                <canvas id="radarChart" class="max-h-[400px]"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Dimension Breakdown -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Dimension Breakdown</h3>
+                            <div id="dimension-breakdown" class="space-y-3">
+                                <!-- Breakdown will be dynamically added here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="bg-card border border-border rounded-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4">Recommendations</h3>
+                        <div id="recommendations" class="space-y-3">
+                            <!-- Recommendations will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-8">
+            <button id="prev-btn" class="px-6 py-2 border border-border rounded-lg font-medium hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Previous
+            </button>
+            <button id="next-btn" class="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity">
+                Next
+            </button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script src="simulator.js"></script>
+</body>
+</html>
