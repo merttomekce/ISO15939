@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measurement Process - ISO 15939</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: 'hsl(var(--primary))',
+                        'primary-foreground': 'hsl(var(--primary-foreground))',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-foreground transition-colors duration-300">
+    <!-- Header -->
+    <header class="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="text-xl font-bold text-primary">ISO 15939</a>
+                <nav class="hidden md:flex gap-6">
+                    <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
+                    <a href="simulator.html" class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
+                    <a href="measurement.html" class="text-sm font-medium text-primary">Measurement</a>
+                </nav>
+            </div>
+            <button id="theme-toggle" class="p-2 rounded-lg hover:bg-accent transition-colors">
+                <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4">ISO 15939 Measurement Wizard</h1>
+            <p class="text-muted-foreground">Follow the 6-step process to define and implement software measurements</p>
+        </div>
+
+        <div class="bg-card border border-border rounded-lg p-8">
+            <div class="space-y-8">
+                <!-- Step 1 -->
+                <div class="border-l-4 border-primary pl-6">
+                    <h3 class="text-xl font-semibold mb-2">Step 1: Information Need</h3>
+                    <p class="text-muted-foreground mb-4">What information do you need to make decisions?</p>
+                    <textarea class="w-full p-3 border border-border rounded-lg bg-background" rows="3" placeholder="Example: We need to know if our application meets user expectations for response time..."></textarea>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="border-l-4 border-border pl-6">
+                    <h3 class="text-xl font-semibold mb-2">Step 2: Measurable Concept</h3>
+                    <p class="text-muted-foreground mb-4">What abstract concept needs to be quantified?</p>
+                    <input type="text" class="w-full p-3 border border-border rounded-lg bg-background" placeholder="Example: Performance Efficiency">
+                </div>
+
+                <!-- Step 3 -->
+                <div class="border-l-4 border-border pl-6">
+                    <h3 class="text-xl font-semibold mb-2">Step 3: Entity & Attributes</h3>
+                    <p class="text-muted-foreground mb-4">What will you measure and which attributes?</p>
+                    <div class="space-y-2">
+                        <input type="text" class="w-full p-3 border border-border rounded-lg bg-background" placeholder="Entity: Web Application">
+                        <input type="text" class="w-full p-3 border border-border rounded-lg bg-background" placeholder="Attribute: Response Time">
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="border-l-4 border-border pl-6">
+                    <h3 class="text-xl font-semibold mb-2">Step 4: Base Measure</h3>
+                    <p class="text-muted-foreground mb-4">How will you collect the raw data?</p>
+                    <textarea class="w-full p-3 border border-border rounded-lg bg-background" rows="2" placeholder="Example: Measure time from request to response in milliseconds..."></textarea>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="border-l-4 border-border pl-6">
+                    <h3 class="text-xl font-semibold mb-2">Step 5: Derived Measure</h3>
+                    <p class="text-muted-foreground mb-4">What calculations will you perform?</p>
+                    <input type="text" class="w-full p-3 border border-border rounded-lg bg-background" placeholder="Example: Average Response Time = Sum(response times) / Count">
+                </div>
+
+                <!-- Step 6 -->
+                <div class="border-l-4 border-border pl-6">
+                    <h3 class="text-xl font-semibold mb-2">Step 6: Indicator</h3>
+                    <p class="text-muted-foreground mb-4">How will you interpret the results?</p>
+                    <textarea class="w-full p-3 border border-border rounded-lg bg-background" rows="3" placeholder="Example: If average response time > 2 seconds, performance is poor. If < 1 second, performance is excellent..."></textarea>
+                </div>
+            </div>
+
+            <div class="mt-8 flex gap-4">
+                <button class="flex-1 px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition-colors">
+                    Save Draft
+                </button>
+                <button class="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity">
+                    Complete Measurement
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
