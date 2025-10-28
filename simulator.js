@@ -1,4 +1,3 @@
-import { Chart } from "@/components/ui/chart"
 // Simulator State
 const state = {
   currentStep: 1,
@@ -6,6 +5,7 @@ const state = {
   weights: {},
   metrics: {},
   caseStudy: null,
+  customScenario: { name: '', description: '' },
 }
 
 // Initialize
@@ -19,14 +19,42 @@ function initSimulator() {
     card.addEventListener("click", () => selectCaseStudy(card))
   })
 
+  // Custom Scenario selection
+  document.getElementById('custom-scenario-radio').addEventListener('change', selectCustomScenario);
+  document.querySelector('.custom-scenario-card').addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT' && e.target.type === 'text' || e.target.tagName === 'TEXTAREA') {
+          return;
+      }
+      if (!document.getElementById('custom-scenario-radio').checked) {
+          document.getElementById('custom-scenario-radio').click();
+      }
+  });
+
+  document.getElementById('project-name').addEventListener('input', (e) => {
+    state.customScenario.name = e.target.value;
+  });
+  document.getElementById('project-description').addEventListener('input', (e) => {
+    state.customScenario.description = e.target.value;
+  });
+
   // Dimension checkboxes
   document.querySelectorAll(".dimension-checkbox input").forEach((checkbox) => {
     checkbox.addEventListener("change", (e) => {
+      const dimension = e.target.value;
       if (e.target.checked) {
-        state.selectedDimensions.push(e.target.value)
+        if (!state.selectedDimensions.includes(dimension)) {
+            state.selectedDimensions.push(dimension);
+        }
       } else {
-        state.selectedDimensions = state.selectedDimensions.filter((d) => d !== e.target.value)
+        state.selectedDimensions = state.selectedDimensions.filter((d) => d !== dimension);
       }
+      
+      // When a dimension is manually changed, switch to a custom mode
+      // but do NOT clear the dimension that was just changed.
+      document.getElementById('custom-scenario-radio').checked = true;
+      document.getElementById('custom-scenario-inputs').classList.remove('hidden');
+      document.querySelectorAll('.case-study-card').forEach(c => c.classList.remove('selected'));
+      state.caseStudy = null;
     })
   })
 
@@ -45,15 +73,39 @@ function initSimulator() {
   })
 }
 
+function selectCustomScenario() {
+    // This function is called by an explicit click on the custom scenario radio/label.
+    // Its purpose is to provide a clean slate.
+    if (document.getElementById('custom-scenario-radio').checked) {
+        document.getElementById('custom-scenario-inputs').classList.remove('hidden');
+
+        // Deselect case studies
+        document.querySelectorAll('.case-study-card').forEach(c => c.classList.remove('selected'));
+        state.caseStudy = null;
+
+        // Clear all dimension selections
+        document.querySelectorAll(".dimension-checkbox input").forEach((cb) => (cb.checked = false));
+        state.selectedDimensions = [];
+    }
+}
+
 function selectCaseStudy(card) {
-  // Deselect all
+  // Deselect all case study cards
   document.querySelectorAll(".case-study-card").forEach((c) => c.classList.remove("selected"))
 
-  // Select clicked card
+  // Select the clicked card
   card.classList.add("selected")
 
-  // Clear dimension checkboxes
+  // Hide custom scenario inputs and uncheck radio
+  document.getElementById('custom-scenario-inputs').classList.add('hidden');
+  document.getElementById('custom-scenario-radio').checked = false;
+  state.customScenario = { name: '', description: '' };
+  document.getElementById('project-name').value = '';
+  document.getElementById('project-description').value = '';
+
+  // Clear existing selected dimensions and checkboxes
   document.querySelectorAll(".dimension-checkbox input").forEach((cb) => (cb.checked = false))
+  state.selectedDimensions = [];
 
   // Set predefined dimensions based on case study
   const title = card.querySelector("h4").textContent
@@ -74,8 +126,13 @@ function selectCaseStudy(card) {
 
 function nextStep() {
   if (state.currentStep === 1) {
+    const useCustomScenario = document.getElementById('custom-scenario-radio').checked;
+    if (useCustomScenario && !state.customScenario.name.trim()) {
+        alert('Please enter a Project Name for your custom scenario.');
+        return;
+    }
     if (state.selectedDimensions.length === 0) {
-      alert("Please select at least one quality dimension or case study.")
+      alert("Please select at least one quality dimension.")
       return
     }
     generateWeightsStep()
