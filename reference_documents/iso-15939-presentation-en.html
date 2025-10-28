@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISO 15939 Measurement Process</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .presentation {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .slide {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 1100px;
+            height: 85vh;
+            padding: 60px;
+            display: none;
+            flex-direction: column;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-header {
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .slide-title {
+            font-size: 2.5em;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .slide-subtitle {
+            font-size: 1.2em;
+            color: #718096;
+        }
+
+        .slide-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn {
+            background: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            color: white;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .process-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .process-step {
+            background: #f7fafc;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 15px 0;
+            border-radius: 10px;
+        }
+
+        .process-step h3 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .process-step p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .example-box {
+            background: #edf2f7;
+            border: 2px dashed #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .example-box strong {
+            color: #667eea;
+        }
+
+        .highlight {
+            background: #fef5e7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #d68910;
+        }
+
+        .diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .diagram-box {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 150px;
+            margin: 10px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .key-points {
+            background: #e6fffa;
+            border-left: 5px solid #38b2ac;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .key-points ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .key-points li {
+            padding: 10px 0;
+            color: #2d3748;
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .key-points li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #38b2ac;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table tr:hover {
+            background: #f7fafc;
+        }
+
+        .logo {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .logo-text {
+            font-size: 4em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .intro-content {
+            text-align: center;
+        }
+
+        .intro-content p {
+            font-size: 1.3em;
+            color: #4a5568;
+            line-height: 1.8;
+            margin: 20px 0;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .card h4 {
+            color: #667eea;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .card p {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .formula {
+            background: #2d3748;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+
+        .metric-example {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+
+        .metric-example h4 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <div class="slide-container">
+            <!-- Slide 1: Cover -->
+            <div class="slide active">
+                <div class="slide-content intro-content">
+                    <div class="logo">
+                        <div class="logo-text">ISO 15939</div>
+                    </div>
+                    <h1 class="slide-title">Software Measurement Process</h1>
+                    <p class="slide-subtitle">Systems and Software Engineering - Measurement Process</p>
+                    <div class="process-box" style="margin-top: 50px;">
+                        <h3 style="text-align: center; font-size: 1.5em;">From Information Needs to Indicators</h3>
+                        <p style="text-align: center; margin-top: 15px; font-size: 1.1em;">Integrated Quality Measurement with ISO 25010 & ISO 25023</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: What is ISO 15939? -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">What is ISO 15939?</h2>
+                    <p class="slide-subtitle">Fundamentals of the Measurement Process</p>
+                </div>
+                <div class="slide-content">
+                    <div class="key-points">
+                        <h3 style="color: #38b2ac; margin-bottom: 15px;">Definition</h3>
+                        <p style="font-size: 1.1em; color: #2d3748;">
+                            ISO/IEC 15939 is an international standard that defines the <span class="highlight">measurement process</span> in software and systems engineering.
+                        </p>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <h4>🎯 Purpose</h4>
+                            <p>To establish a measurable, repeatable, and reliable measurement process in software projects</p>
+                        </div>
+                        <div class="card">
+                            <h4>📊 Scope</h4>
+                            <p>The entire process from identifying information needs to interpreting indicators</p>
+                        </div>
+                        <div class="card">
+                            <h4>🔗 Integration</h4>
+                            <p>Used together with ISO 25010 (quality model) and ISO 25023 (quality measurements)</p>
+                        </div>
+                        <div class="card">
+                            <h4>✅ Benefits</h4>
+                            <p>Objective evaluation, data-driven decisions, continuous improvement</p>
+                        </div>
+                    </div>
+
+                    <div class="process-box" style="margin-top: 30px;">
+                        <h3 style="margin-bottom: 15px;">💡 Why is it Important?</h3>
+                        <p>"You can't manage what you can't measure" - Peter Drucker</p>
+                        <p style="margin-top: 10px;">ISO 15939 provides the ability to evaluate software quality with objective data.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Measurement Process Overview -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">ISO 15939 Measurement Process</h2>
+                    <p class="slide-subtitle">6-Step Structured Process</p>
+                </div>
+                <div class="slide-content">
+                    <div class="diagram">
+                        <div class="diagram-box">1. Information<br>Need</div>
+                        <div class="arrow">→</div>
+                        <div class="diagram-box">2. Measurable<br>Concept</div>
+                        <div class="arrow">→</div>
+                        <div class="diagram-box">3. Entity &<br>Attributes</div>
+                    </div>
+                    <div class="diagram">
+                        <div class="diagram-box">4. Base<br>Measure</div>
+                        <div class="arrow">→</div>
+                        <div class="diagram-box">5. Derived<br>Measure</div>
+                        <div class="arrow">→</div>
+                        <div class="diagram-box">6. Indicator</div>
+                    </div>
+
+                    <div class="key-points" style="margin-top: 30px;">
+                        <h3 style="color: #38b2ac; margin-bottom: 15px;">Process Logic</h3>
+                        <ul>
+                            <li><strong>Top-Down:</strong> Start from needs and descend to concrete measurements</li>
+                            <li><strong>Structured:</strong> Each step uses the output of the previous step</li>
+                            <li><strong>Repeatable:</strong> Standard process can be used in every project</li>
+                            <li><strong>Result-Oriented:</strong> Indicators support decision making</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+                        <strong>🔍 Practical Example:</strong> The journey from "Do our users find our software usable?" to a usability score
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Step 1 - Information Need -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Step 1: Information Need</h2>
+                    <p class="slide-subtitle">Defining the Purpose of Measurement</p>
+                </div>
+                <div class="slide-content">
+                    <div class="process-step">
+                        <h3>📋 Definition</h3>
+                        <p>The stage of determining the purpose of measurement and what information is needed.</p>
+                        <p><strong>Question:</strong> "What do we want to learn about?"</p>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Information Need Example</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>What is the usability level of the software?</td>
+                                <td>User experience evaluation</td>
+                            </tr>
+                            <tr>
+                                <td>Does the system have security vulnerabilities?</td>
+                                <td>Security status assessment</td>
+                            </tr>
+                            <tr>
+                                <td>Have we met our performance targets?</td>
+                                <td>Performance evaluation</td>
+                            </tr>
+                            <tr>
+                                <td>Is code quality sufficient?</td>
+                                <td>Maintainability analysis</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="key-points">
+                        <h3 style="color: #38b2ac; margin-bottom: 15px;">Well-Defined Information Need</h3>
+                        <ul>
+                            <li>In the form of a clear and specific question</li>
+                            <li>Aligned with decision makers' needs</li>
+                            <li>Can be converted to measurable concepts</li>
+                            <li>Consistent with project objectives</li>
+                        </ul>
+                    </div>
+
+                    <div class="metric-example">
+                        <h4>💼 Real Scenario</h4>
+                        <p><strong>Context:</strong> You are developing an e-commerce site</p>
+                        <p><strong>Information Need:</strong> "Can customers easily complete the checkout process?"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Step 2 - Measurable Concept -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Step 2: Measurable Concept</h2>
+                    <p class="slide-subtitle">Converting to Concrete Concepts</p>
+                </div>
+                <div class="slide-content">
+                    <div class="process-step">
+                        <h3>🎯 Definition</h3>
+                        <p>The stage of converting information needs into concrete and measurable concepts.</p>
+                        <p><strong>Question:</strong> "By measuring which concepts can we obtain this information?"</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <h4>❌ Abstract Concept</h4>
+                            <p>"Usability"</p>
+                            <p style="margin-top: 10px; font-size: 0.9em; color: #e53e3e;">Too general, hard to measure</p>
+                        </div>
+                        <div class="card">
+                            <h4>✅ Measurable Concept</h4>
+                            <p>"Task completion rate"</p>
+                            <p>"Learning time"</p>
+                            <p>"User error rate"</p>
+                            <p style="margin-top: 10px; font-size: 0.9em; color: #38a169;">Specific and measurable</p>
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <strong>📊 ISO 25010 Relationship:</strong><br>
+                        Quality characteristics in ISO 25010 provide references for measurable concepts.
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li><strong>Usability</strong> → Learnability, operability effectiveness</li>
+                            <li><strong>Performance Efficiency</strong> → Response time, resource utilization</li>
+                            <li><strong>Security</strong> → Vulnerability density, access control</li>
+                        </ul>
+                    </div>
+
+                    <div class="metric-example">
+                        <h4>💼 Scenario Continued</h4>
+                        <p><strong>Information Need:</strong> "Can customers easily complete the checkout process?"</p>
+                        <p><strong>Measurable Concepts:</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Checkout process completion rate</li>
+                            <li>Average completion time</li>
+                            <li>Number of errors during checkout</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: Step 3 - Entity and Attributes -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Step 3: Relevant Entity and Attributes</h2>
+                    <p class="slide-subtitle">Identifying What to Measure</p>
+                </div>
+                <div class="slide-content">
+                    <div class="process-step">
+                        <h3>🔍 Definition</h3>
+                        <p>The stage of determining the concrete entities to be measured and their attributes.</p>
+                        <p><strong>Question:</strong> "What properties of what will we measure?"</p>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Entity</th>
+                                <th>Attribute</th>
+                                <th>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>User Interaction</td>
+                                <td>Duration, Success status</td>
+                                <td>Task completion time: 45 seconds</td>
+                            </tr>
+                            <tr>
+                                <td>Form Field</td>
+                                <td>Error count</td>
+                                <td>Credit card field: 3 errors</td>
+                            </tr>
+                            <tr>
+                                <td>Payment Transaction</td>
+                                <td>Outcome (Success/Failure)</td>
+                                <td>100 attempts, 87 successful</td>
+                            </tr>
+                            <tr>
+                                <td>User</td>
+                                <td>Experience level</td>
+                                <td>First-time users: 20 people</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="key-points">
+                        <h3 style="color: #38b2ac; margin-bottom: 15px;">Entity Selection Criteria</h3>
+                        <ul>
+                            <li>Must be directly observable or recordable</li>
+                            <li>Must have measurable attributes</li>
+                            <li>Must be related to the measurable concept</li>
+                            <li>Must be accessible through data collection tools</li>
+                        </ul>
+                    </div>
+
+                    <div class="metric-example">
+                        <h4>💼 Scenario Continued</h4>
+                        <p><strong>Measurable Concept:</strong> Checkout process completion rate</p>
+                        <p><strong>Entity:</strong> Payment transaction</p>
+                        <p><strong>Attributes:</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Start time</li>
+                            <li>End time</li>
+                            <li>Outcome (success/failure)</li>
+                            <li>Error message (if any)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: Step 4 - Base Measure -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Step 4: Base Measure</h2>
+                    <p class="slide-subtitle">Direct Measurement of Raw Data</p>
+                </div>
+                <div class="slide-content">
+                    <div class="process-step">
+                        <h3>📏 Definition</h3>
+                        <p>Raw data obtained through direct measurement of entity attributes.</p>
+                        <p><strong>Question:</strong> "What raw data will we collect?"</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <h4>Base Measure Characteristics</h4>
+                            <ul style="list-style: disc; padding-left: 20px; margin-top: 10px;">
+                                <li>Directly observable</li>
+                                <li>Requires no mathematical operations</li>
+                                <li>In raw data format</li>
+                                <li>Measures a single attribute</li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <h4>Collection Methods</h4>
+                            <ul style="list-style: disc; padding-left: 20px; margin-top: 10px;">
+                                <li>Log file analysis</li>
+                                <li>Automated measurement tools</li>
+                                <li>User testing</li>
+                                <li>System monitoring</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="example-box">
+                        <strong>📝 Base Measure Examples:</strong>
+                        <table class="table" style="margin-top: 15px;">
+                            <thead>
+                                <tr>
+                                    <th>Measure</th>
+                                    <th>Value</th>
+                                    <th>Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Task completion time</td>
+                                    <td>45</td>
+                                    <td>seconds</td>
+                                </tr>
+                                <tr>
+                                    <td>Successful payment count</td>
+                                    <td>87</td>
+                                    <td>count</td>
+                                </tr>
+                                <tr>
+                                    <td>Total payment attempts</td>
+                                    <td>100</td>
+                                    <td>count</td>
+                                </tr>
+                                <tr>
+                                    <td>User error count</td>
+                                    <td>3</td>
+                                    <td>count</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="metric-example">
+                        <h4>💼 Scenario Continued</h4>
+                        <p><strong>Collected Base Measures (1 week of data):</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Total payment initiations: 1000 count</li>
+                            <li>Successful payments: 870 count</li>
+                            <li>Failed payments: 130 count</li>
+                            <li>Average time (successful): 42 seconds</li>
+                            <li>Average time (failed): 67 seconds</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: Step 5 - Derived Measure -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Step 5: Derived Measure</h2>
+                    <p class="slide-subtitle">Calculated Metrics from Base Measures</p>
+                </div>
+                <div class="slide-content">
+                    <div class="process-step">
+                        <h3>🧮 Definition</h3>
+                        <p>Metrics calculated from two or more base measures through mathematical operations.</p>
+                        <p><strong>Question:</strong> "How do we make raw data meaningful?"</p>
+                    </div>
+
+                    <div class="formula">
+                        Derived Measure = f(Base Measure₁, Base Measure₂, ...)
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <h4>📊 Ratio/Percentage Calculations</h4>
+                            <div class="formula" style="font-size: 0.9em; margin-top: 10px;">
+                                Success Rate = (Successful / Total) × 100
+                            </div>
+                            <p style="margin-top: 10px;">Example: (870 / 1000) × 100 = 87%</p>
+                        </div>
+                        <div class="card">
+                            <h4>⏱️ Average Calculations</h4>
+                            <div class="formula" style="font-size: 0.9em; margin-top: 10px;">
+                                Avg. Time = Σ(Times) / Count
+                            </div>
+                            <p style="margin-top: 10px;">Example: 36540 / 870 = 42 seconds</p>
+                        </div>
+                    </div>
+
+                    <div class="key-points">
+                        <h3 style="color: #38b2ac; margin-bottom: 15px;">ISO 25023 Metric Examples</h3>
+                        <ul>
+                            <li><strong>Task Success Rate:</strong> Successful tasks / Total tasks</li>
+                            <li><strong>Task Time:</strong> Average task completion time</li>
+                            <li><strong>Error Frequency:</strong> Error count / Transaction count</li>
+                            <li><strong>Learn Time:</strong> Time to achieve competency</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+                        <strong>💡 Derived Measure Examples:</strong>
+                        <table class="table" style="margin-top: 15px;">
+                            <thead>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Formula</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Payment Success Rate</td>
+                                    <td>870 / 1000 × 100</td>
+                                    <td>87%</td>
+                                </tr>
+                                <tr>
+                                    <td>Error Rate</td>
+                                    <td>130 / 1000 × 100</td>
+                                    <td>13%</td>
+                                </tr>
+                                <tr>
+                                    <td>Efficiency</td>
+                                    <td>Success Rate / Avg. Time</td>
+                                    <td>2.07%/sec</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: Step 6 - Indicator -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Step 6: Indicator</h2>
+                    <p class="slide-subtitle">Decision Support Output</p>
+                </div>
+                <div class="slide-content">
+                    <div class="process-step">
+                        <h3>🎯 Definition</h3>
+                        <p>The interpretation of derived measures and presentation to answer the information need.</p>
+                        <p><strong>Question:</strong> "What do these metrics tell us and what should we do?"</p>
+                    </div>
+
+                    <div class="metric-example">
+                        <h4>📈 Indicator Characteristics</h4>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Interpretable and understandable</li>
+                            <li>Supports decision making</li>
+                            <li>Comparable with targets</li>
+                            <li>Provides actionable insights</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-box">
+                        <strong>🎯 Indicator Structure:</strong>
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <div>
+                                    <div style="font-size: 2em; font-weight: bold; color: #667eea;">87%</div>
+                                    <div style="color: #4a5568;">Payment Success Rate</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.5em; color: #f59e0b;">⚠️</div>
+                                    <div style="font-size: 0.9em; color: #4a5568;">Below Target</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2em; font-weight: bold; color: #10b981;">95%</div>
+                                    <div style="color: #4a5568;">Target</div>
+                                </div>
+                            </div>
+                            <div style="background: #fee; padding: 15px; border-left: 4px solid #f59e0b; border-radius: 5px;">
+                                <strong style="color: #f59e0b;">Status:</strong> 8 points below target<br>
+                                <strong style="color: #f59e0b;">Recommendation:</strong> Payment form should undergo usability testing
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card">
+                            <h4>✅ Good Indicator</h4>
+                            <p style="color: #10b981; font-weight: bold;">Usability Score: 87/100</p>
+                            <p style="font-size: 0.9em; margin-top: 5px;">Target: 95/100 (8 points short)</p>
+                            <p style="font-size: 0.9em; color: #f59e0b;">Simplify form fields</p>
+                        </div>
+                        <div class="card">
+                            <h4>❌ Poor Indicator</h4>
+                            <p>"Success rate is low"</p>
+                            <p style="font-size: 0.9em; margin-top: 5px; color: #e53e3e;">How low? What to do?</p>
+                        </div>
+                    </div>
+
+                    <div class="process-box">
+                        <h3>💼 Scenario Result</h3>
+                        <p><strong>Indicator:</strong> "Payment Usability: Improvement Needed"</p>
+                        <p style="margin-top: 10px;">Current: 87% | Target: 95% | Gap: -8%</p>
+                        <p style="margin-top: 10px;"><strong>Action:</strong> Improve card information fields with auto-fill</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: ISO Integration -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">ISO 15939 and ISO 25010/25023</h2>
+                    <p class="slide-subtitle">Integrated Quality Assessment</p>
+                </div>
+                <div class="slide-content">
+                    <div class="key-points">
+                        <h3 style="color: #38b2ac; margin-bottom: 15px;">Role of Standards</h3>
+                        <ul>
+                            <li><strong>ISO 15939:</strong> Defines HOW to measure (process)</li>
+                            <li><strong>ISO 25010:</strong> Defines WHAT to measure (quality model)</li>
+                            <li><strong>ISO 25023:</strong> Defines WHICH metrics to use</li>
+                        </ul>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ISO 25010 Characteristic</th>
+                                <th>ISO 25023 Metric Example</th>
+                                <th>ISO 15939 Step</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Functional Suitability</td>
+                                <td>Functional Completeness</td>
+                                <td>Measurable Concept</td>
+                            </tr>
+                            <tr>
+                                <td>Performance Efficiency</td>
+                                <td>Response Time, Throughput</td>
+                                <td>Base Measure</td>
+                            </tr>
+                            <tr>
+                                <td>Usability</td>
+                                <td>Task Success Rate</td>
+                                <td>Derived Measure</td>
+                            </tr>
+                            <tr>
+                                <td>Reliability</td>
+                                <td>Mean Time Between Failures</td>
+                                <td>Indicator</td>
+                            </tr>
+                            <tr>
+                                <td>Security</td>
+                                <td>Access Control Effectiveness</td>
+                                <td>Indicator</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="diagram">
+                        <div class="diagram-box" style="background: #f093fb;">ISO 25010<br>Quality Model</div>
+                        <div class="arrow">+</div>
+                        <div class="diagram-box" style="background: #667eea;">ISO 15939<br>Measurement Process</div>
+                        <div class="arrow">+</div>
+                        <div class="diagram-box" style="background: #38b2ac;">ISO 25023<br>Quality Metrics</div>
+                        <div class="arrow">=</div>
+                        <div class="diagram-box" style="background: #10b981;">Comprehensive<br>Quality Assessment</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 11: Practical Application -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Practical Application Example</h2>
+                    <p class="slide-subtitle">Mobile Application Quality Assessment</p>
+                </div>
+                <div class="slide-content">
+                    <div class="process-step">
+                        <h3>🎯 1. Information Need</h3>
+                        <p>"Is the user experience of our mobile application at an acceptable level?"</p>
+                    </div>
+
+                    <div class="process-step">
+                        <h3>📊 2. Measurable Concept (ISO 25010)</h3>
+                        <p><strong>Usability</strong> → Learnability, Operability, User Error Protection</p>
+                    </div>
+
+                    <div class="process-step">
+                        <h3>🔍 3. Entity and Attributes</h3>
+                        <p><strong>Entity:</strong> User task (profile creation)</p>
+                        <p><strong>Attributes:</strong> Completion status, duration, error count</p>
+                    </div>
+
+                    <div class="process-step">
+                        <h3>📏 4. Base Measure</h3>
+                        <ul style="padding-left: 20px; margin-top: 10px;">
+                            <li>50 user tests conducted</li>
+                            <li>43 users completed task successfully</li>
+                            <li>Average duration: 3.2 minutes</li>
+                            <li>Total errors: 47 count</li>
+                        </ul>
+                    </div>
+
+                    <div class="process-step">
+                        <h3>🧮 5. Derived Measure (ISO 25023)</h3>
+                        <ul style="padding-left: 20px; margin-top: 10px;">
+                            <li><strong>Task Success Rate:</strong> 43/50 = 86%</li>
+                            <li><strong>Average Task Time:</strong> 3.2 minutes</li>
+                            <li><strong>Error Rate:</strong> 47/50 = 0.94 errors/user</li>
+                        </ul>
+                    </div>
+
+                    <div class="metric-example">
+                        <h4>🎯 6. Indicator and Decision</h4>
+                        <p><strong>Usability Score: 86/100</strong></p>
+                        <p style="margin-top: 10px;">Target: 90/100 (4 points short)</p>
+                        <p style="margin-top: 10px;"><strong>Decision:</strong> Close to target but form flow should be optimized</p>
+                        <p style="margin-top: 10px;"><strong>Action:</strong> Improve error messages, add auto-complete</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 12: Summary and Conclusion -->
+            <div class="slide">
+                <div class="slide-header">
+                    <h2 class="slide-title">Summary and Key Takeaways</h2>
+                    <p class="slide-subtitle">The Power of ISO 15939 Measurement Process</p>
+                </div>
+                <div class="slide-content">
+                    <div class="key-points">
+                        <h3 style="color: #38b2ac; margin-bottom: 15px;">🎯 Benefits of the Process</h3>
+                        <ul>
+                            <li>Structured and repeatable measurement approach</li>
+                            <li>Objective data-driven decision making</li>
+                            <li>Integrated quality assessment with ISO 25010/25023</li>
+                            <li>Solid foundation for continuous improvement</li>
+                        </ul>
+                    </div>
+
+                    <div class="diagram">
+                        <div class="diagram-box">Information Need<br>👤 Human-Centered</div>
+                        <div class="arrow">↓</div>
+                        <div class="diagram-box">Measurable Concept<br>📊 Concretization</div>
+                        <div class="arrow">↓</div>
+                        <div class="diagram-box">Base Measure<br>📏 Data Collection</div>
+                        <div class="arrow">↓</div>
+                        <div class="diagram-box">Indicator<br>💡 Action</div>
+                    </div>
+
+                    <div class="process-box">
+                        <h3 style="margin-bottom: 15px;">💼 Real World Success Tips</h3>
+                        <ul style="padding-left: 20px;">
+                            <li>Always start with a clear information need</li>
+                            <li>Use ISO 25010 as a reference</li>
+                            <li>Select appropriate metrics from ISO 25023</li>
+                            <li>Use automated data collection tools</li>
+                            <li>Share indicators with stakeholders</li>
+                            <li>Continuously improve the process</li>
+                        </ul>
+                    </div>
+
+                    <div class="metric-example">
+                        <h4>🚀 Next Steps</h4>
+                        <p>1. Define an information need in your own project</p>
+                        <p>2. Apply the ISO 15939 process step by step</p>
+                        <p>3. Visualize results using the measurement tool</p>
+                        <p>4. Discuss indicators with your team and take action</p>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
+                        <h2 style="font-size: 2em; margin-bottom: 10px;">Thank You! 🎉</h2>
+                        <p style="font-size: 1.2em;">Ready for your questions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="prevBtn">← Previous</button>
+            <div class="slide-counter">
+                <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+            </div>
+            <button class="btn" id="nextBtn">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const currentSlideSpan = document.getElementById('currentSlide');
+        const totalSlidesSpan = document.getElementById('totalSlides');
+
+        totalSlidesSpan.textContent = slides.length;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[n].classList.add('active');
+            currentSlideSpan.textContent = n + 1;
+
+            prevBtn.disabled = n === 0;
+            nextBtn.disabled = n === slides.length - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        prevBtn.addEventListener('click', prevSlide);
+        nextBtn.addEventListener('click', nextSlide);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>
