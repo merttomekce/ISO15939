@@ -153,6 +153,8 @@ function nextStep() {
 
   if (state.currentStep < 4) {
     goToStep(state.currentStep + 1)
+  } else { // This will be step 4, and the button text is "Finish"
+    window.location.href = 'index.html'; // Redirect to the main page
   }
 }
 
