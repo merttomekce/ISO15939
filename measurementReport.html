@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measurement Report - ISO 15939</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: 'hsl(var(--primary))',
+                        'primary-foreground': 'hsl(var(--primary-foreground))',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-foreground transition-colors duration-300">
+    <!-- Header -->
+    <header class="border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="text-xl font-bold text-primary">ISO 15939</a>
+                <nav class="hidden md:flex gap-6">
+                    <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
+                    <a href="simulator.html" class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
+                    <a href="measurement.html" class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
+                    <a href="measurementReport.html" class="text-sm font-medium text-primary">Report</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4">Measurement Report</h1>
+            <p class="text-muted-foreground">Here is a summary of your measurement process</p>
+        </div>
+
+        <div class="bg-card border border-border rounded-lg p-8 space-y-6">
+            <div>
+                <h3 class="text-xl font-semibold mb-2">Step 1: Information Need</h3>
+                <p id="step1" class="text-muted-foreground"></p>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold mb-2">Step 2: Measurable Concept</h3>
+                <p id="step2" class="text-muted-foreground"></p>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold mb-2">Step 3: Entity & Attributes</h3>
+                <p id="step3" class="text-muted-foreground"></p>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold mb-2">Step 4: Base Measure</h3>
+                <p id="step4" class="text-muted-foreground"></p>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold mb-2">Step 5: Derived Measure</h3>
+                <p id="step5" class="text-muted-foreground"></p>
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold mb-2">Step 6: Indicator</h3>
+                <p id="step6" class="text-muted-foreground"></p>
+            </div>
+
+            <div class="mt-8 flex justify-between">
+                <a href="measurement.html" class="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">Back to Measurement</a>
+                <button id="downloadReport" class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Download Report</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Verileri localStorage'dan çek ve raporda göster
+        document.getElementById('step1').textContent = localStorage.getItem('step1') || 'No data';
+        document.getElementById('step2').textContent = localStorage.getItem('step2') || 'No data';
+        document.getElementById('step3').textContent = localStorage.getItem('step3') || 'No data';
+        document.getElementById('step4').textContent = localStorage.getItem('step4') || 'No data';
+        document.getElementById('step5').textContent = localStorage.getItem('step5') || 'No data';
+        document.getElementById('step6').textContent = localStorage.getItem('step6') || 'No data';
+
+        // Raporu indirme fonksiyonu
+        document.getElementById('downloadReport').addEventListener('click', () => {
+            let content = `
+Measurement Report
+=================
+Step 1: ${localStorage.getItem('step1') || ''}
+Step 2: ${localStorage.getItem('step2') || ''}
+Step 3: ${localStorage.getItem('step3') || ''}
+Step 4: ${localStorage.getItem('step4') || ''}
+Step 5: ${localStorage.getItem('step5') || ''}
+Step 6: ${localStorage.getItem('step6') || ''}
+`;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'MeasurementReport.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
