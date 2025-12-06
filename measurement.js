@@ -11,7 +11,7 @@ const FIELDS = [
 
 // --- CONFIGURATION ---
 // REPLACE THIS WITH YOUR GEMINI API KEY
-const GEMINI_API_KEY = "AIzaSyDJf8lfK4CmyNSWQ4GEC8jM0zs5XlWTwOo";
+const GEMINI_API_KEY = "YOUR_API_KEY_HERE";
 // ---------------------
 
 const saveDraftBtn = document.getElementById("saveDraft");
