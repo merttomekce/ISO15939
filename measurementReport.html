@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,6 +24,7 @@
         }
     </script>
 </head>
+
 <body class="bg-background text-foreground transition-colors duration-300">
     <!-- Header -->
     <header class="border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-50">
@@ -31,9 +33,13 @@
                 <a href="index.html" class="text-xl font-bold text-primary">ISO 15939</a>
                 <nav class="hidden md:flex gap-6">
                     <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
-                    <a href="simulator.html" class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
-                    <a href="measurement.html" class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
+                    <a href="simulator.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
+                    <a href="measurement.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
                     <a href="measurementReport.html" class="text-sm font-medium text-primary">Report</a>
+                    <a href="references.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">References</a>
                 </nav>
             </div>
         </div>
@@ -73,8 +79,12 @@
             </div>
 
             <div class="mt-8 flex justify-between">
-                <a href="measurement.html" class="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">Back to Measurement</a>
-                <button id="downloadReport" class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Download Report</button>
+                <a href="measurement.html"
+                    class="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">Back to
+                    Measurement</a>
+                <button id="downloadReport"
+                    class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">Download
+                    Report</button>
             </div>
         </div>
     </main>
@@ -110,4 +120,5 @@ Step 6: ${localStorage.getItem('step6') || ''}
         });
     </script>
 </body>
+
 </html>
