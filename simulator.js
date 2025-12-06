@@ -125,6 +125,7 @@ function selectCaseStudy(card) {
 }
 
 function nextStep() {
+  
   if (state.currentStep === 1) {
     const useCustomScenario = document.getElementById('custom-scenario-radio').checked;
     if (useCustomScenario && !state.customScenario.name.trim()) {
@@ -136,15 +137,23 @@ function nextStep() {
       return
     }
     generateWeightsStep()
-  } else if (state.currentStep === 2) {
+  } 
+  
+  else if (state.currentStep === 2) {
     const total = Object.values(state.weights).reduce((sum, w) => sum + w, 0)
-    if (Math.abs(total - 100) > 0.1) {
+    
+    if (Math.abs(total - 100) > 0.5) { 
       alert("Total weight must equal 100%")
       return
     }
     generateMetricsStep()
-  } else if (state.currentStep === 3) {
-    if (Object.keys(state.metrics).length !== state.selectedDimensions.length) {
+  } 
+  
+  else if (state.currentStep === 3) {
+    
+    const missingMetrics = state.selectedDimensions.filter(dim => state.metrics[dim] === undefined || state.metrics[dim] === "");
+    
+    if (missingMetrics.length > 0) {
       alert("Please enter values for all dimensions.")
       return
     }
@@ -153,6 +162,8 @@ function nextStep() {
 
   if (state.currentStep < 4) {
     goToStep(state.currentStep + 1)
+  } else {
+    finishSimulator();
   }
 }
 
@@ -453,4 +464,100 @@ function getRecommendation(dimension, score) {
   }
 
   return recommendations[dimension] || "Focus on improving this quality dimension through targeted improvements."
+}
+function finishSimulator() {
+    const date = new Date().toLocaleString();
+    const projectName = state.customScenario.name || (state.caseStudy ? state.caseStudy + " Case Study" : "Unnamed Project");
+    const finalScore = document.getElementById("overall-score").textContent;
+    const qualityRating = document.getElementById("quality-rating").textContent;
+
+    let content = "==================================================\n";
+    content += "   QUALITY ASSESSMENT REPORT - ISO 15939\n";
+    content += "==================================================\n\n";
+    
+    content += `Project Name: ${projectName}\n`;
+    content += `Date: ${date}\n`;
+    if (state.customScenario.description) {
+        content += `Description: ${state.customScenario.description}\n`;
+    }
+    content += "\n--------------------------------------------------\n";
+    content += "   RESULTS SUMMARY\n";
+    content += "--------------------------------------------------\n";
+    content += `Overall Score  : ${finalScore} / 100\n`;
+    content += `Quality Rating : ${qualityRating}\n\n`;
+
+    content += "--------------------------------------------------\n";
+    content += "   DETAILED BREAKDOWN\n";
+    content += "--------------------------------------------------\n\n";
+
+    state.selectedDimensions.forEach(dim => {
+        const weight = state.weights[dim];
+        const score = state.metrics[dim];
+        const weighted = ((score * weight) / 100).toFixed(1);
+        
+        content += `[ ${dim.toUpperCase()} ]\n`;
+        content += `   - Weight Assigned     : ${weight}%\n`;
+        content += `   - Measured Value      : ${score} / 100\n`;
+        content += `   - Contribution to Total: ${weighted}\n`;
+
+        if (score < 60) {
+            const recommendation = getRecommendation(dim, score);
+            content += `   - Recommendation      : ${recommendation}\n`;
+        }
+        content += "\n";
+    });
+
+    content += "==================================================\n";
+    content += "   END OF REPORT\n";
+    content += "==================================================\n";
+
+    try {
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+
+        const anchor = document.createElement("a");
+        anchor.href = URL.createObjectURL(blob);
+
+        const safeFileName = projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        anchor.download = `${safeFileName}_quality_report.txt`;
+
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+
+        setTimeout(() => {
+            if(confirm("Report downloaded successfully! Would you like to start a new simulation?")) {
+                resetSimulator();
+            }
+        }, 500);
+
+    } catch (err) {
+        console.error("Download failed:", err);
+        alert("An error occurred while generating the file.");
+    }
+}
+
+function resetSimulator() {
+  state.currentStep = 1;
+  state.selectedDimensions = [];
+  state.weights = {};
+  state.metrics = {};
+  state.caseStudy = null;
+  state.customScenario = { name: '', description: '' };
+
+  document.getElementById('project-name').value = '';
+  document.getElementById('project-description').value = '';
+  
+  document.querySelectorAll(".dimension-checkbox input").forEach((cb) => (cb.checked = false));
+  
+  document.querySelectorAll(".case-study-card").forEach((c) => c.classList.remove("selected"));
+  
+  document.getElementById('custom-scenario-inputs').classList.add('hidden');
+  document.getElementById('custom-scenario-radio').checked = false;
+
+  if (window.radarChartInstance) {
+    window.radarChartInstance.destroy();
+    window.radarChartInstance = null;
+  }
+
+  goToStep(1);
 }
