@@ -1,57 +1,78 @@
-// DOM elementlerini al
+// Define the fields to track
+const FIELDS = [
+    "infoNeed",
+    "measurableConcept",
+    "entity",
+    "attribute",
+    "baseMeasure",
+    "derivedMeasure",
+    "indicator"
+];
+
 const saveDraftBtn = document.getElementById("saveDraft");
 const completeBtn = document.getElementById("completeMeasurement");
 
-// Form verilerini toplayan fonksiyon
+// Collect form data into an object
 function getFormData() {
-    const textareas = document.querySelectorAll("textarea");
-    const inputs = document.querySelectorAll("input[type='text']");
-    let data = [];
-    textareas.forEach(ta => data.push(ta.value));
-    inputs.forEach(inp => data.push(inp.value));
+    const data = {};
+    FIELDS.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            data[id] = element.value;
+        }
+    });
     return data;
 }
 
-// Form verilerini geri yükleyen fonksiyon
+// Populate form from data object
 function setFormData(data) {
-    const textareas = document.querySelectorAll("textarea");
-    const inputs = document.querySelectorAll("input[type='text']");
-    let i = 0;
-    textareas.forEach(ta => ta.value = data[i++] || "");
-    inputs.forEach(inp => inp.value = data[i++] || "");
+    if (!data) return;
+    FIELDS.forEach(id => {
+        const element = document.getElementById(id);
+        if (element && data[id] !== undefined) {
+            element.value = data[id];
+        }
+    });
 }
 
-// Kaydedilmiş draft varsa yükle
+// Load draft on startup
 window.addEventListener("DOMContentLoaded", () => {
-    const draft = localStorage.getItem("measurementDraft");
-    if (draft) setFormData(JSON.parse(draft));
+    try {
+        const draft = localStorage.getItem("measurementDraft");
+        if (draft) {
+            setFormData(JSON.parse(draft));
+            console.log("Draft loaded");
+        }
+    } catch (e) {
+        console.error("Error loading draft:", e);
+    }
 });
 
 // Save Draft
-saveDraftBtn.addEventListener("click", () => {
-    const data = getFormData();
-    localStorage.setItem("measurementDraft", JSON.stringify(data));
-    alert("Draft saved!");
-});
+if (saveDraftBtn) {
+    saveDraftBtn.addEventListener("click", () => {
+        const data = getFormData();
+        localStorage.setItem("measurementDraft", JSON.stringify(data));
+
+        // Visual feedback (optional but good UI)
+        const originalText = saveDraftBtn.innerText;
+        saveDraftBtn.innerText = "Saved!";
+        setTimeout(() => {
+            saveDraftBtn.innerText = originalText;
+        }, 2000);
+    });
+}
 
 // Complete Measurement
-completeBtn.addEventListener("click", () => {
-    const data = getFormData();
+if (completeBtn) {
+    completeBtn.addEventListener("click", () => {
+        const data = getFormData();
 
-    // backend varsa fetch ile gönderebilirsin
-    /*
-    fetch("http://localhost:5000/api/measurements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ measurement: data })
-    }).then(res => res.json())
-      .then(res => console.log(res));
-    */
+        // Clear draft and save completed measurement
+        localStorage.removeItem("measurementDraft");
+        localStorage.setItem("completedMeasurement", JSON.stringify(data));
 
-    // localStorage temizle ve rapor sayfasına yönlendir
-    localStorage.removeItem("measurementDraft");
-    localStorage.setItem("completedMeasurement", JSON.stringify(data));
-    window.location.href = "measurementReport.html";
-    
-});
+        window.location.href = "measurementReport.html";
+    });
+}
 
