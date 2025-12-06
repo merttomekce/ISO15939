@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Measurement Process - ISO 15939</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="styles.css">
     <script>
         tailwind.config = {
@@ -126,6 +127,14 @@
                     class="flex-1 px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition-colors">
                     Save Draft
                 </button>
+                <button id="analyzeAI"
+                    class="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Analyze with AI
+                </button>
                 <button id="completeMeasurement"
                     class="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity">
                     Complete Measurement
@@ -133,6 +142,38 @@
             </div>
         </div>
     </main>
+
+    <!-- Analysis Results Modal -->
+    <div id="analysisModal"
+        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div
+            class="bg-card border border-border rounded-lg p-6 max-w-4xl w-full mx-4 shadow-lg max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">AI Analysis Report</h3>
+                <button id="closeAnalysis" class="text-muted-foreground hover:text-foreground">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div id="analysisContent"
+                class="overflow-y-auto flex-1 prose prose-invert max-w-none p-4 border border-border rounded-lg bg-background/50">
+                <!-- Content will be injected here -->
+                <div class="flex flex-col items-center justify-center h-64 space-y-4">
+                    <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-muted-foreground animate-pulse">Generating analysis...</p>
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button id="copyAnalysis"
+                    class="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-accent transition-colors mr-2">Copy
+                    to Clipboard</button>
+                <button id="doneAnalysis"
+                    class="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">Done</button>
+            </div>
+        </div>
+    </div>
 
     <script src="measurement.js"></script>
     <script src="script.js"></script>
