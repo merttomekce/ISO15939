@@ -10,8 +10,7 @@ const FIELDS = [
 ];
 
 // --- CONFIGURATION ---
-// REPLACE THIS WITH YOUR GEMINI API KEY
-const GEMINI_API_KEY = "YOUR_API_KEY_HERE";
+// API Key is now handled in the backend (.env file)
 // ---------------------
 
 const saveDraftBtn = document.getElementById("saveDraft");
@@ -108,11 +107,7 @@ function toggleModal(modal, show) {
 // Handle Analyze Button Click
 if (analyzeBtn) {
     analyzeBtn.addEventListener("click", () => {
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_API_KEY_HERE") {
-            alert("API Key not configured. Please add your Gemini API Key to measurement.js");
-            return;
-        }
-        performAnalysis(GEMINI_API_KEY);
+        performAnalysis();
     });
 }
 
@@ -134,7 +129,7 @@ if (copyAnalysisBtn) {
 }
 
 // Perform User Data Analysis
-async function performAnalysis(apiKey) {
+async function performAnalysis() {
     toggleModal(analysisModal, true);
 
     // Show loading state
@@ -178,21 +173,18 @@ async function performAnalysis(apiKey) {
     `;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+        // Send to local backend proxy
+        const response = await fetch('/api/ai/analyze', {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: prompt }]
-                }]
-            })
+            body: JSON.stringify({ prompt: prompt })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error?.message || "Failed to fetch from Gemini API");
+            throw new Error(errorData.error?.message || "Failed to fetch from Backend API");
         }
 
         const result = await response.json();
@@ -212,7 +204,13 @@ async function performAnalysis(apiKey) {
             <div class="text-center p-6 text-red-500">
                 <h3 class="text-lg font-bold mb-2">Analysis Failed</h3>
                 <p>Error: ${error.message}</p>
-                <p class="mt-4 text-sm text-foreground">Please check your internet connection or API Quota.</p>
+                <div class="mt-4 p-4 bg-red-50 text-sm rounded text-left">
+                    <strong>Troubleshooting:</strong>
+                    <ul class="list-disc ml-5 mt-2">
+                        <li>Make sure the backend server is running (<code>npm start</code> in backend folder).</li>
+                        <li>Check if API Key is configured in <code>backend/.env</code>.</li>
+                    </ul>
+                </div>
                 <button onclick="toggleModal(analysisModal, false)" class="mt-4 px-4 py-2 border border-red-200 rounded text-red-700 hover:bg-red-50">Close</button>
             </div>
         `;

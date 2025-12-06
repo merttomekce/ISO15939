@@ -1,58 +1,75 @@
-# ISO15939 Measurement and Simulation Tool
+# ISO 15939 Measurement & Simulation Tool
 
-This project is a web-based tool for software measurement and simulation, based on the ISO/IEC 15939 standard. It provides a user-friendly interface to define, collect, analyze, and plan software measurements, as well as to simulate measurement processes.
+A web-based tool for defining, collecting, and analyzing software measurements according to the **ISO/IEC 15939** standard. It includes a comprehensive Measurement Wizard, a Simulator for "what-if" analysis, and an **AI-powered analysis** feature using Google Gemini.
 
 ## Features
 
-*   **Dashboard:** A central dashboard to visualize measurement data and get an overview of the measurement process.
-*   **Measurement Wizard:** A step-by-step wizard to guide users through the process of defining and performing software measurements according to the ISO/IEC 15939 standard.
-*   **Simulator:** A tool to simulate software measurement processes, allowing users to experiment with different scenarios and parameters.
-*   **Process Overview:** A graphical representation of the measurement process, helping users to understand the relationships between different measurement activities.
-*   **Themeable:** The application includes a theme provider and a theme toggle to switch between light and dark modes.
+-   **Measurement Wizard**: A 6-step guided process to define Information Needs, Measures, and Indicators.
+-   **AI Analysis**: Generates detailed compliance reports and quality recommendations using Google's Gemini 1.5 Flash model.
+-   **Simulator**: Interactive tool to simulate measurement scenarios and visualize outcomes.
+-   **Reference Library**: built-in access to key ISO standards and project documentation.
+-   **Secure Architecture**: Backend proxy ensures API keys are never exposed to the client.
+
+## Technology Stack
+
+-   **Frontend**: Vanilla HTML5, JavaScript (ES6+), Tailwind CSS (via CDN).
+-   **Backend**: Node.js, Express.js.
+-   **AI**: Google Gemini API via `generativelanguage.googleapis.com`.
 
 ## Getting Started
 
-To get a local copy up and running, follow these simple steps.
+Follow these steps to run the application locally.
 
 ### Prerequisites
+-   [Node.js](https://nodejs.org/) (v16 or higher) installed.
+-   A generic text editor or IDE (VS Code recommended).
 
-*   [Node.js](https://nodejs.org/) (v22 or later)
-*   [pnpm](https://pnpm.io/)
+### Installation & Setup
 
-### Installation
-
-1.  Clone the repo
-    ```sh
+1.  **Clone the Repository**
+    ```bash
     git clone https://github.com/merttomekce/ISO15939.git
-    ```
-2.  Install NPM packages
-    ```sh
-    pnpm install
-    ```
-3.  Run the development server
-    ```sh
-    pnpm dev
+    cd ISO15939
     ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Install Backend Dependencies**
+    The application requires a lightweight backend server to handle secure API calls.
+    ```bash
+    cd backend
+    npm install
+    ```
 
-## Technologies Used
+3.  **Configure API Key**
+    To use the AI features, you need a free Google Gemini API Key.
+    1.  Get a key from [Google AI Studio](https://aistudio.google.com/).
+    2.  Create a file named `.env` inside the `backend` folder.
+    3.  Add your key to the file:
+        ```env
+        PORT=5000
+        GEMINI_API_KEY=AIzaSy... (paste your actual key here)
+        ```
 
-*   [Next.js](https://nextjs.org/) - React framework for building server-side rendered and static web applications.
-*   [TypeScript](https://www.typescriptlang.org/) - A typed superset of JavaScript that compiles to plain JavaScript.
-*   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapidly building custom designs.
-*   [shadcn/ui](https://ui.shadcn.com/) - A collection of re-usable components built using Radix UI and Tailwind CSS.
-*   [Recharts](https://recharts.org/) - A composable charting library built on React components.
-*   [Framer Motion](https://www.framer.com/motion/) - A production-ready motion library for React.
+4.  **Start the Application**
+    From the `backend` directory, run:
+    ```bash
+    npm start
+    ```
+    The terminal should show: `Server running on http://localhost:5000`
 
-## File Structure
+### How to Use
 
-The project follows the standard Next.js `app` directory structure.
+1.  Open your browser and visit **`http://localhost:5000`**.
+    > **Note**: Do not open the `.html` files directly (e.g., `file:///...`). The AI features require the server environment.
+2.  Navigate to **Measurement**.
+3.  Fill out the 6-step form.
+4.  Click the purple **Analyze with AI** button to generate a report.
 
-*   `app/`: Contains the main application logic, including pages, layouts, and components.
-*   `components/`: Contains re-usable React components used throughout the application.
-*   `hooks/`: Contains custom React hooks.
-*   `lib/`: Contains utility functions and libraries.
-*   `public/`: Contains static assets such as images and fonts.
-*   `styles/`: Contains global styles and CSS modules.
+## Directory Structure
 
+-   `backend/`: Node.js server and API routes.
+    -   `server.js`: Main entry point, serves static files and API.
+    -   `routes/`: API endpoint definitions.
+-   `index.html`: Landing page.
+-   `measurement.html`: Core measurement wizard interface.
+-   `measurement.js`: Client-side logic for the wizard and AI integration.
+-   `styles/`: Custom CSS (if any) alongside Tailwind.
