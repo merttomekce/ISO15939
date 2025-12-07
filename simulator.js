@@ -465,75 +465,129 @@ function getRecommendation(dimension, score) {
 
   return recommendations[dimension] || "Focus on improving this quality dimension through targeted improvements."
 }
-function finishSimulator() {
+async function finishSimulator() {
+    if (!window.jspdf) {
+        alert("PDF kütüphanesi yüklenemedi.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
     const date = new Date().toLocaleString();
     const projectName = state.customScenario.name || (state.caseStudy ? state.caseStudy + " Case Study" : "Unnamed Project");
+    const description = state.customScenario.description || "No description provided.";
     const finalScore = document.getElementById("overall-score").textContent;
     const qualityRating = document.getElementById("quality-rating").textContent;
 
-    let content = "==================================================\n";
-    content += "   QUALITY ASSESSMENT REPORT - ISO 15939\n";
-    content += "==================================================\n\n";
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text("Quality Assessment Report (ISO 15939)", 105, 20, null, null, "center");
+    doc.setLineWidth(0.5);
+    doc.line(20, 25, 190, 25);
+
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Project Name: ${projectName}`, 20, 35);
+    doc.text(`Date: ${date}`, 20, 42);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const splitDescription = doc.splitTextToSize(`Description: ${description}`, 170);
+    doc.text(splitDescription, 20, 50);
+
+    let yPos = 50 + (splitDescription.length * 5) + 10;
+
+    doc.setDrawColor(0, 0, 0);
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, yPos, 170, 25, 'F');
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Overall Score: ${finalScore} / 100`, 105, yPos + 10, null, null, "center");
+    doc.setFontSize(12);
+    if(parseFloat(finalScore) >= 80) doc.setTextColor(0, 150, 0);
+    else if(parseFloat(finalScore) < 60) doc.setTextColor(200, 0, 0);
+    doc.text(`Rating: ${qualityRating}`, 105, yPos + 20, null, null, "center");
     
-    content += `Project Name: ${projectName}\n`;
-    content += `Date: ${date}\n`;
-    if (state.customScenario.description) {
-        content += `Description: ${state.customScenario.description}\n`;
+    yPos += 35;
+
+    const canvas = document.getElementById('radarChart');
+    const chart = window.radarChartInstance;
+
+    if (canvas && chart) {
+
+        const originalScales = JSON.parse(JSON.stringify(chart.options.scales));
+        const originalBorderColor = chart.data.datasets[0].borderColor;
+        const originalBgColor = chart.data.datasets[0].backgroundColor;
+
+        chart.options.scales.r.pointLabels.color = '#000000'; 
+        chart.options.scales.r.pointLabels.font = { size: 14, weight: 'bold' }; 
+
+        chart.options.scales.r.ticks.color = '#000000';
+        chart.options.scales.r.ticks.backdropColor = 'transparent'; 
+
+        chart.options.scales.r.grid.color = '#000000ff'; 
+
+        chart.data.datasets[0].borderColor = '#000000'; 
+        chart.data.datasets[0].backgroundColor = 'rgba(100, 100, 100, 0.2)'; 
+
+        chart.update();
+
+        const canvasImg = canvas.toDataURL("image/png", 1.0);
+        const imgWidth = 200;
+        const imgHeight = 150;
+        const xPos = (210 - imgWidth) / 2;
+
+        if (yPos + imgHeight > 280) {
+            doc.addPage();
+            yPos = 20;
+        }
+        doc.addImage(canvasImg, 'PNG', xPos, yPos, imgWidth, imgHeight);
+        yPos += imgHeight + 10;
+
+        chart.options.scales = originalScales;
+        chart.data.datasets[0].borderColor = originalBorderColor;
+        chart.data.datasets[0].backgroundColor = originalBgColor;
+        chart.update();
     }
-    content += "\n--------------------------------------------------\n";
-    content += "   RESULTS SUMMARY\n";
-    content += "--------------------------------------------------\n";
-    content += `Overall Score  : ${finalScore} / 100\n`;
-    content += `Quality Rating : ${qualityRating}\n\n`;
 
-    content += "--------------------------------------------------\n";
-    content += "   DETAILED BREAKDOWN\n";
-    content += "--------------------------------------------------\n\n";
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Detailed Breakdown", 20, yPos);
+    yPos += 10;
+    doc.setFontSize(10);
 
-    state.selectedDimensions.forEach(dim => {
+    state.selectedDimensions.forEach((dim) => {
+        if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+        }
         const weight = state.weights[dim];
         const score = state.metrics[dim];
         const weighted = ((score * weight) / 100).toFixed(1);
-        
-        content += `[ ${dim.toUpperCase()} ]\n`;
-        content += `   - Weight Assigned     : ${weight}%\n`;
-        content += `   - Measured Value      : ${score} / 100\n`;
-        content += `   - Contribution to Total: ${weighted}\n`;
+        const recommendation = score < 60 ? getRecommendation(dim, score) : "Satisfactory.";
 
-        if (score < 60) {
-            const recommendation = getRecommendation(dim, score);
-            content += `   - Recommendation      : ${recommendation}\n`;
-        }
-        content += "\n";
+        doc.setFont(undefined, 'bold');
+        doc.text(dim.toUpperCase(), 20, yPos);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Weight: ${weight}% | Score: ${score} | Weighted Impact: ${weighted}`, 20, yPos + 5);
+        
+        doc.setTextColor(80, 80, 80);
+        const splitRec = doc.splitTextToSize(`Recommendation: ${recommendation}`, 170);
+        doc.text(splitRec, 20, yPos + 10);
+        
+        doc.setTextColor(0, 0, 0);
+        yPos += 15 + (splitRec.length * 4);
     });
 
-    content += "==================================================\n";
-    content += "   END OF REPORT\n";
-    content += "==================================================\n";
+    const safeFileName = projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    doc.save(`${safeFileName}_report.pdf`);
 
-    try {
-        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-
-        const anchor = document.createElement("a");
-        anchor.href = URL.createObjectURL(blob);
-
-        const safeFileName = projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        anchor.download = `${safeFileName}_quality_report.txt`;
-
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-
-        setTimeout(() => {
-            if(confirm("Report downloaded successfully! Would you like to start a new simulation?")) {
-                resetSimulator();
-            }
-        }, 500);
-
-    } catch (err) {
-        console.error("Download failed:", err);
-        alert("An error occurred while generating the file.");
-    }
+    setTimeout(() => {
+        if(confirm("PDF downloaded! Start a new simulation?")) {
+            resetSimulator();
+        }
+    }, 1000);
 }
 
 function resetSimulator() {
