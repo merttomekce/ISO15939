@@ -1,6 +1,6 @@
-# ISO15939 Measurement and Simulation Tool
+# ISO 15939 Measurement & Simulation Tool
 
-This project is a web-based tool for software measurement and simulation, based on the ISO/IEC 15939 standard. It provides a user-friendly interface to define, collect, analyze, and plan software measurements, as well as to simulate measurement processes.
+A web-based tool for defining, collecting, and analyzing software measurements according to the **ISO/IEC 15939** standard. It includes a comprehensive Measurement Wizard, a Simulator for "what-if" analysis, and an **AI-powered analysis** feature using Google Gemini.
 
 The project is now fully backed by a **MongoDB database** to persist simulation results and measurement drafts.
 
@@ -22,15 +22,14 @@ The project is now fully backed by a **MongoDB database** to persist simulation 
 
 ## Getting Started
 
-To get a local copy up and running, follow these simple steps.
+Follow these steps to run the application locally.
 
 ### Prerequisites
 -   [Node.js](https://nodejs.org/) (v16 or higher) installed.
 -   A generic text editor or IDE (VS Code recommended).
 -   A **MongoDB Connection URI** (You can use [MongoDB Atlas](https://www.mongodb.com/atlas/database) for a free cloud database or install MongoDB Community Server locally).
 
-*   [Node.js](https://nodejs.org/) (v22 or later)
-*   [pnpm](https://pnpm.io/)
+### Installation & Setup
 
 1.  **Clone the Repository**
     ```bash
@@ -69,18 +68,7 @@ To get a local copy up and running, follow these simple steps.
     - `Server running on http://localhost:5000`
     - `✅ MongoDB Connected Successfully`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Technologies Used
-
-*   [Next.js](https://nextjs.org/) - React framework for building server-side rendered and static web applications.
-*   [TypeScript](https://www.typescriptlang.org/) - A typed superset of JavaScript that compiles to plain JavaScript.
-*   [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapidly building custom designs.
-*   [shadcn/ui](https://ui.shadcn.com/) - A collection of re-usable components built using Radix UI and Tailwind CSS.
-*   [Recharts](https://recharts.org/) - A composable charting library built on React components.
-*   [Framer Motion](https://www.framer.com/motion/) - A production-ready motion library for React.
-
-## File Structure
+### How to Use
 
 1.  Open your browser and visit **`http://localhost:5000`**.
     > **Note**: Do not open the `.html` files directly. The app must be served via the backend to access the database.
@@ -88,12 +76,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 3.  **Measurement**: Fill out the form. Use "Save Draft" to persist your progress to the database.
 4.  **AI Analysis**: Click "Analyze with AI" in the Measurement section for intelligent feedback.
 
-*   `app/`: Contains the main application logic, including pages, layouts, and components.
-*   `components/`: Contains re-usable React components used throughout the application.
-*   `hooks/`: Contains custom React hooks.
-*   `lib/`: Contains utility functions and libraries.
-*   `public/`: Contains static assets such as images and fonts.
-*   `styles/`: Contains global styles and CSS modules.
+## Directory Structure
 
 -   `backend/`: Server-side logic.
     -   `server.js`: Main entry point, database connection, and static file serving.
