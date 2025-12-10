@@ -1,0 +1,27 @@
+{
+  "name": "iso15939",
+  "version": "1.0.0",
+  "description": "This project is a web-based tool for software measurement and simulation, based on the ISO/IEC 15939 standard. It provides a user-friendly interface to define, collect, analyze, and plan software measurements, as well as to simulate measurement processes.",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/merttomekce/ISO15939.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/merttomekce/ISO15939/issues"
+  },
+  "homepage": "https://github.com/merttomekce/ISO15939#readme",
+  "devDependencies": {
+    "tailwindcss": "^4.1.16"
+  },
+  "dependencies": {
+    "mongoose": "^9.0.1"
+  }
+}
