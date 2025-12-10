@@ -50,8 +50,8 @@ function setFormData(data) {
 // Load data from Database on startup
 window.addEventListener("DOMContentLoaded", async () => {
     try {
-        const response = await fetch('http://localhost:5000/api/measurements/latest');
-        
+        const response = await fetch('/api/measurements/latest');
+
         if (response.ok) {
             const data = await response.json();
             // Validate data existence to prevent form errors
@@ -70,17 +70,17 @@ window.addEventListener("DOMContentLoaded", async () => {
 if (saveDraftBtn) {
     saveDraftBtn.addEventListener("click", async (e) => {
         // Prevent default form submission behavior
-        if(e) e.preventDefault(); 
+        if (e) e.preventDefault();
 
         const data = getFormData();
-        
+
         // UI Feedback: Set button state to 'Saving...'
         const originalText = saveDraftBtn.innerText;
         saveDraftBtn.innerText = "Saving...";
         saveDraftBtn.disabled = true;
 
         try {
-            const response = await fetch('http://localhost:5000/api/measurements/save', {
+            const response = await fetch('/api/measurements/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -89,7 +89,7 @@ if (saveDraftBtn) {
             if (response.ok) {
                 const result = await response.json();
                 console.log("Draft saved successfully:", result);
-                
+
                 saveDraftBtn.innerText = "Saved!";
             } else {
                 throw new Error("Server responded with an error");
