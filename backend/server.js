@@ -3,10 +3,13 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
+
+// Route Imports
 import measurementRoutes from "./routes/measurementRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import simulationRoutes from "./routes/simulationRoutes.js";
 
-// Load environment variables
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,16 +19,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// API routes
+// --- DATABASE CONNECTION ---
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/iso15939_db";
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log("✅ MongoDB Connected Successfully"))
+  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+
+// API Routes
 app.use("/api/measurements", measurementRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/simulation", simulationRoutes);
 
-// Serve static files from the ROOT directory (one level up from backend)
-// This serves index.html, styles.css, etc. directly
+// Static Files
 app.use(express.static(path.join(__dirname, "../")));
 
-// Special Routes for specific HTML pages if needed (though static middleware handles them mostly)
-// We keep these for explicit routing if users hit /index.html directly
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../index.html"));
 });

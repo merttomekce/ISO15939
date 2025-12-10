@@ -47,31 +47,64 @@ function setFormData(data) {
     });
 }
 
-// Load draft on startup
-window.addEventListener("DOMContentLoaded", () => {
+// Load data from Database on startup
+window.addEventListener("DOMContentLoaded", async () => {
     try {
-        const draft = localStorage.getItem("measurementDraft");
-        if (draft) {
-            setFormData(JSON.parse(draft));
-            console.log("Draft loaded");
+        const response = await fetch('http://localhost:5000/api/measurements/latest');
+        
+        if (response.ok) {
+            const data = await response.json();
+            // Validate data existence to prevent form errors
+            if (data && Object.keys(data).length > 0) {
+                setFormData(data);
+                console.log("Data successfully retrieved from database.");
+            }
         }
     } catch (e) {
-        console.error("Error loading draft:", e);
+        // Suppress error if no initial data is found or server is unreachable
+        console.warn("No existing data found or server unreachable.");
     }
 });
 
-// Save Draft
+// Save to Database (Draft)
 if (saveDraftBtn) {
-    saveDraftBtn.addEventListener("click", () => {
-        const data = getFormData();
-        localStorage.setItem("measurementDraft", JSON.stringify(data));
+    saveDraftBtn.addEventListener("click", async (e) => {
+        // Prevent default form submission behavior
+        if(e) e.preventDefault(); 
 
-        // Visual feedback
+        const data = getFormData();
+        
+        // UI Feedback: Set button state to 'Saving...'
         const originalText = saveDraftBtn.innerText;
-        saveDraftBtn.innerText = "Saved!";
-        setTimeout(() => {
-            saveDraftBtn.innerText = originalText;
-        }, 2000);
+        saveDraftBtn.innerText = "Saving...";
+        saveDraftBtn.disabled = true;
+
+        try {
+            const response = await fetch('http://localhost:5000/api/measurements/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log("Draft saved successfully:", result);
+                
+                saveDraftBtn.innerText = "Saved!";
+            } else {
+                throw new Error("Server responded with an error");
+            }
+        } catch (error) {
+            console.error("Save operation failed:", error);
+            saveDraftBtn.innerText = "Error!";
+            alert("Failed to save data. Please verify the server connection.");
+        } finally {
+            // Restore button to original state
+            setTimeout(() => {
+                saveDraftBtn.innerText = originalText;
+                saveDraftBtn.disabled = false;
+            }, 2000);
+        }
     });
 }
 

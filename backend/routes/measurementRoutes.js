@@ -1,25 +1,26 @@
 import express from "express";
-import { saveMeasurement, getMeasurements } from "../models/measurementModel.js";
+import Measurement from "../models/Measurement.js";
 
 const router = express.Router();
 
-// Yeni ölçüm kaydet
-router.post("/", async (req, res) => {
+// Save
+router.post("/save", async (req, res) => {
   try {
-    const saved = await saveMeasurement(req.body);
-    res.status(201).json(saved);
+    const newMeasurement = new Measurement(req.body);
+    const saved = await newMeasurement.save();
+    res.status(201).json({ message: "Saved", id: saved._id });
   } catch (err) {
-    res.status(500).json({ error: "Error saving measurement" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// Tüm ölçümleri getir
-router.get("/", async (req, res) => {
+// Bring the last record
+router.get("/latest", async (req, res) => {
   try {
-    const data = await getMeasurements();
-    res.json(data);
+    const latest = await Measurement.findOne().sort({ createdAt: -1 });
+    res.status(200).json(latest || {});
   } catch (err) {
-    res.status(500).json({ error: "Error fetching data" });
+    res.status(500).json({ error: err.message });
   }
 });
 

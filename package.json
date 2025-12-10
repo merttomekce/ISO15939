@@ -20,5 +20,8 @@
   "homepage": "https://github.com/merttomekce/ISO15939#readme",
   "devDependencies": {
     "tailwindcss": "^4.1.16"
+  },
+  "dependencies": {
+    "mongoose": "^9.0.1"
   }
 }

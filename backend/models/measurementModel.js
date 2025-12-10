@@ -2,7 +2,7 @@ import fs from "fs/promises";
 
 const filePath = "./backend/db/measurements.json";
 
-// Yeni ölçüm kaydet
+
 export async function saveMeasurement(measurement) {
   try {
     const fileData = await fs.readFile(filePath, "utf8").catch(() => "[]");
@@ -16,7 +16,7 @@ export async function saveMeasurement(measurement) {
   }
 }
 
-// Tüm ölçümleri getir
+
 export async function getMeasurements() {
   try {
     const fileData = await fs.readFile(filePath, "utf8").catch(() => "[]");
