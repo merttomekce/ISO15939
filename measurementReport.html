@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Measurement Report - ISO 15939</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
+
     <link rel="stylesheet" href="styles.css">
     <script>
         tailwind.config = {
@@ -36,12 +36,27 @@
                 <a href="index.html" class="text-xl font-bold text-primary">ISO 15939</a>
                 <nav class="hidden md:flex gap-6">
                     <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
-                    <a href="simulator.html" class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
-                    <a href="measurement.html" class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
+                    <a href="simulator.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
+                    <a href="measurement.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
                     <a href="measurementReport.html" class="text-sm font-medium text-primary">Report</a>
-                    <a href="references.html" class="text-sm font-medium hover:text-primary transition-colors">References</a>
+                    <a href="references.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">References</a>
                 </nav>
             </div>
+            <button id="theme-toggle" class="p-2 rounded-lg hover:bg-accent transition-colors">
+                <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                    </path>
+                </svg>
+                <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                    </path>
+                </svg>
+            </button>
         </div>
     </header>
 
@@ -77,14 +92,28 @@
                 <p id="step6" class="text-muted-foreground">Loading...</p>
             </div>
 
+
+
             <div class="mt-8 flex justify-between">
                 <a href="measurement.html"
                     class="px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors">Back to
                     Measurement</a>
-                <button id="downloadReport"
-                    class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
-                    Download PDF Report
-                </button>
+            </div>
+
+            <!-- PDF Preview Section -->
+            <div class="mt-8 border-t border-border pt-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Report Preview</h3>
+                    <button id="downloadReport"
+                        class="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download PDF
+                    </button>
+                </div>
+                <iframe id="pdfPreview" class="w-full h-[600px] border border-border rounded-lg bg-gray-100"></iframe>
             </div>
         </div>
     </main>
@@ -97,8 +126,10 @@
             step3: localStorage.getItem('step3') || 'No data provided.',
             step4: localStorage.getItem('step4') || 'No data provided.',
             step5: localStorage.getItem('step5') || 'No data provided.',
-            step6: localStorage.getItem('step6') || 'No data provided.'
+            step6: localStorage.getItem('step6') || 'No data provided.',
         };
+
+
 
         document.getElementById('step1').textContent = stepData.step1;
         document.getElementById('step2').textContent = stepData.step2;
@@ -107,28 +138,112 @@
         document.getElementById('step5').textContent = stepData.step5;
         document.getElementById('step6').textContent = stepData.step6;
 
-        document.getElementById('downloadReport').addEventListener('click', async () => {
-
-            if (!window.jspdf) {
-                alert("PDF library not loaded. Please check your internet connection.");
-                return;
-            }
-
+        function generatePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            doc.setFontSize(22);
-            doc.setTextColor(40, 40, 40);
-            doc.text("Measurement Report", 105, 20, null, null, "center");
-            
-            doc.setLineWidth(0.5);
-            doc.line(20, 25, 190, 25); 
+            // --- Helper Constants ---
+            const MARGIN_LEFT = 20;
+            const MARGIN_TOP = 25;
+            const LINE_HEIGHT_NORMAL = 6;
+            const LINE_HEIGHT_HEADING = 10;
+            const PAGE_HEIGHT = doc.internal.pageSize.height;
+            let yPos = MARGIN_TOP;
 
-            doc.setFontSize(10);
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Generated on: ${new Date().toLocaleString()}`, 190, 32, null, null, "right");
+            // --- Header Function ---
+            function drawHeader() {
+                doc.setFillColor(41, 128, 185); // Professional Blue
+                doc.rect(0, 0, 210, 15, 'F'); // Blue banner top
 
-            let yPos = 45;
+                doc.setFontSize(22);
+                doc.setTextColor(255, 255, 255);
+                doc.setFont("helvetica", "bold");
+                doc.text("Measurement Analysis Report", 105, 10, null, null, "center");
+
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`ISO 15939 Compliance`, MARGIN_LEFT, 22);
+                doc.text(`${new Date().toLocaleString()}`, 190, 22, null, null, "right");
+
+                // Divider Line
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.5);
+                doc.line(MARGIN_LEFT, 23, 190, 23);
+
+                yPos = 35; // Reset yPos for content
+            }
+
+            // --- Content Renderer ---
+            function renderText(text, isMarkdown = false) {
+                if (!text) return;
+
+                const lines = text.split('\n');
+
+                lines.forEach(line => {
+                    // 1. New Page Check
+                    if (yPos > PAGE_HEIGHT - 25) {
+                        doc.addPage();
+                        drawHeader();
+                    }
+
+                    line = line.trim();
+                    if (!line) {
+                        yPos += 3;
+                        return;
+                    }
+
+                    // 2. Formatting Logic (Markdown support if enabled)
+                    if (isMarkdown && line.startsWith('## ')) {
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(14);
+                        doc.setTextColor(41, 128, 185);
+                        doc.text(line.replace('## ', ''), MARGIN_LEFT, yPos);
+                        yPos += LINE_HEIGHT_HEADING;
+                        doc.setDrawColor(41, 128, 185);
+                        doc.setLineWidth(0.5);
+                        doc.line(MARGIN_LEFT, yPos - 8, 150, yPos - 8);
+
+                    } else if (isMarkdown && line.startsWith('### ')) {
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(12);
+                        doc.setTextColor(50, 50, 50);
+                        doc.text(line.replace('### ', ''), MARGIN_LEFT, yPos);
+                        yPos += LINE_HEIGHT_HEADING - 2;
+
+                    } else if (isMarkdown && (line.startsWith('- ') || line.startsWith('* '))) {
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(11);
+                        doc.setTextColor(0, 0, 0);
+                        const text = line.replace(/^[-*]\s*/, '');
+                        const wrappedText = doc.splitTextToSize(text, 160);
+                        doc.text("•", MARGIN_LEFT + 2, yPos);
+                        wrappedText.forEach(l => {
+                            if (yPos > PAGE_HEIGHT - 25) { doc.addPage(); drawHeader(); }
+                            doc.text(l, MARGIN_LEFT + 8, yPos);
+                            yPos += LINE_HEIGHT_NORMAL;
+                        });
+                        yPos += 1;
+
+                    } else {
+                        // Normal Paragraph / Step Content
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(11);
+                        doc.setTextColor(0, 0, 0);
+                        const cleanLine = line.replace(/\*\*/g, '');
+                        const wrappedText = doc.splitTextToSize(cleanLine, 170);
+
+                        wrappedText.forEach(l => {
+                            if (yPos > PAGE_HEIGHT - 25) { doc.addPage(); drawHeader(); }
+                            doc.text(l, MARGIN_LEFT, yPos);
+                            yPos += LINE_HEIGHT_NORMAL;
+                        });
+                        yPos += 2;
+                    }
+                });
+            }
+
+            drawHeader();
+
             const steps = [
                 { title: "Step 1: Information Need", content: stepData.step1 },
                 { title: "Step 2: Measurable Concept", content: stepData.step2 },
@@ -138,33 +253,74 @@
                 { title: "Step 6: Indicator", content: stepData.step6 }
             ];
 
+            // Render Steps
             steps.forEach((step) => {
+                if (yPos > PAGE_HEIGHT - 35) { doc.addPage(); drawHeader(); }
 
-                if (yPos > 270) {
-                    doc.addPage();
-                    yPos = 20;
-                }
+                // Step Title as Section Header
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(41, 128, 185);
+                doc.text(step.title, MARGIN_LEFT, yPos);
+                yPos += LINE_HEIGHT_HEADING;
+                doc.setDrawColor(41, 128, 185);
+                doc.setLineWidth(0.5);
+                doc.line(MARGIN_LEFT, yPos - 8, 150, yPos - 8);
 
-                doc.setFontSize(12);
-                doc.setTextColor(0, 0, 0); 
-                doc.setFont(undefined, 'bold');
-                doc.text(step.title, 20, yPos);
-                
-                yPos += 7; 
-
-                doc.setFontSize(11);
-                doc.setTextColor(60, 60, 60); 
-                doc.setFont(undefined, 'normal');
-
-                const splitText = doc.splitTextToSize(step.content, 170);
-                doc.text(splitText, 20, yPos);
-
-                yPos += (splitText.length * 5) + 10;
+                renderText(step.content, false);
+                yPos += 5;
             });
 
+            // Render AI Analysis
+            if (stepData.aiAnalysis) {
+                if (yPos > PAGE_HEIGHT - 40) { doc.addPage(); drawHeader(); }
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.setTextColor(142, 68, 173); // Purple for AI Section
+                doc.text("AI Analysis Report", MARGIN_LEFT, yPos);
+                yPos += LINE_HEIGHT_HEADING;
+                doc.setDrawColor(142, 68, 173);
+                doc.setLineWidth(0.5);
+                doc.line(MARGIN_LEFT, yPos - 8, 210 - MARGIN_LEFT, yPos - 8);
+
+                renderText(stepData.aiAnalysis, true);
+            }
+
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(9);
+                doc.setTextColor(150, 150, 150);
+                doc.text(`Page ${i} of ${pageCount}`, 105, PAGE_HEIGHT - 10, null, null, "center");
+            }
+
+            return doc;
+        }
+
+        // Generate and show preview on load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!window.jspdf) {
+                console.error("PDF library not loaded.");
+                return;
+            }
+
+            const doc = generatePDF();
+            const pdfDataUri = doc.output('datauristring');
+            document.getElementById('pdfPreview').src = pdfDataUri;
+        });
+
+        document.getElementById('downloadReport').addEventListener('click', () => {
+            if (!window.jspdf) {
+                alert("PDF library not loaded. Please check your internet connection.");
+                return;
+            }
+            const doc = generatePDF();
             doc.save('Measurement_Report.pdf');
         });
     </script>
+    <script src="script.js"></script>
 </body>
 
 </html>
