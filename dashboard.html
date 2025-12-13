@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ISO 15939</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: 'hsl(var(--primary))',
+                        'primary-foreground': 'hsl(var(--primary-foreground))',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background text-foreground transition-colors duration-300">
+    <header class="border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="text-xl font-bold text-primary">ISO 15939</a>
+                <nav class="hidden md:flex gap-6">
+                    <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
+                    <a href="simulator.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
+                    <a href="measurement.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
+                    <a href="references.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">References</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="auth-container"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-2">Welcome, <span id="userDisplay">User</span></h1>
+        <p class="text-muted-foreground mb-8">View your saved measurements and simulation history.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Measurements -->
+            <div class="bg-card border border-border rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Saved Measurements
+                </h2>
+                <div id="measurementsList" class="space-y-4">
+                    <p class="text-sm text-gray-400">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Simulations -->
+            <div class="bg-card border border-border rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                        </path>
+                    </svg>
+                    Simulation History
+                </h2>
+                <div id="simulationsList" class="space-y-4">
+                    <p class="text-sm text-gray-400">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Simulation Details Modal -->
+    <div id="simModal"
+        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-card border border-border rounded-lg max-w-2xl w-full shadow-lg max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-border flex justify-between items-start">
+                <div>
+                    <h3 id="simModalTitle" class="text-xl font-bold">Project Name</h3>
+                    <p id="simModalDate" class="text-sm text-muted-foreground">Date</p>
+                </div>
+                <button id="closeSimModal" class="text-muted-foreground hover:text-foreground">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-6">
+                <!-- Score Cards -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-accent/20 border border-border rounded-lg text-center">
+                        <div class="text-xs text-muted-foreground uppercase tracking-wide">Overall Score</div>
+                        <div id="simModalScore" class="text-3xl font-bold text-primary">0.0</div>
+                    </div>
+                    <div class="p-4 bg-accent/20 border border-border rounded-lg text-center">
+                        <div class="text-xs text-muted-foreground uppercase tracking-wide">Quality Rating</div>
+                        <div id="simModalRating" class="text-lg font-semibold">Good</div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <h4 class="font-medium mb-1">Description</h4>
+                    <p id="simModalDesc" class="text-sm text-muted-foreground bg-accent/20 p-3 rounded-lg"></p>
+                </div>
+
+                <!-- Metrics Breakdown -->
+                <div>
+                    <h4 class="font-medium mb-3">Metrics Breakdown</h4>
+                    <div id="simModalMetrics" class="space-y-3">
+                        <!-- Dynamic Content Placeholder -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. Auth Check
+            auth.checkAuth();
+            document.getElementById('userDisplay').textContent = localStorage.getItem('username') || 'User';
+
+            // Store simulations in memory for quick access
+            let simulationsData = [];
+
+            // 2. Fetch Measurements (Existing Logic)
+            try {
+                const res = await fetch('/api/measurements/history', {
+                    headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+                });
+                const measurements = await res.json();
+                const mList = document.getElementById('measurementsList');
+                mList.innerHTML = '';
+                if (measurements.length === 0) {
+                    mList.innerHTML = '<p class="text-sm text-muted-foreground">No measurements saved yet.</p>';
+                } else {
+                    measurements.forEach(m => {
+                        const date = new Date(m.createdAt).toLocaleDateString();
+                        const summary = m.infoNeed || "No info need specified";
+                        mList.innerHTML += `
+                            <div class="p-3 border border-border rounded hover:bg-accent/50 transition-colors">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-sm truncate w-48">${summary}</p>
+                                        <p class="text-xs text-muted-foreground">${date}</p>
+                                    </div>
+                                    <a href="measurementReport.html?id=${m._id}" class="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:opacity-90">View</a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {
+                document.getElementById('measurementsList').innerHTML = '<p class="text-red-500 text-sm">Failed to load measurements.</p>';
+            }
+
+            // 3. Fetch Simulations (Updated Logic)
+            try {
+                const res = await fetch('/api/simulation/history', {
+                    headers: { 'Authorization': `Bearer ${auth.getToken()}` }
+                });
+                simulationsData = await res.json(); // Store globally
+                const sList = document.getElementById('simulationsList');
+                sList.innerHTML = '';
+
+                if (simulationsData.length === 0) {
+                    sList.innerHTML = '<p class="text-sm text-muted-foreground">No simulations saved yet.</p>';
+                } else {
+                    simulationsData.forEach((s, index) => {
+                        const date = new Date(s.createdAt).toLocaleDateString();
+                        const title = s.projectName || "Unnamed Project";
+                        const score = s.overallScore?.toFixed(2) || 'N/A';
+
+                        // Use index to reference data array
+                        sList.innerHTML += `
+                             <div class="p-3 border border-border rounded hover:bg-accent/50 transition-colors">
+                                <div class="flex justify-between items-start">
+                                    <div class="overflow-hidden mr-2">
+                                        <p class="font-medium text-sm truncate" title="${title}">${title}</p>
+                                        <p class="text-xs text-muted-foreground">Score: ${score} &bull; ${date}</p>
+                                    </div>
+                                    <button onclick="openSimModal(${index})" 
+                                        class="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:opacity-90 whitespace-nowrap">
+                                        View
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('simulationsList').innerHTML = '<p class="text-red-500 text-sm">Failed to load simulations.</p>';
+            }
+
+            // Modal Handlers
+            window.openSimModal = (index) => {
+                const sim = simulationsData[index];
+                if (!sim) return;
+
+                document.getElementById('simModalTitle').textContent = sim.projectName || "Unnamed Project";
+                document.getElementById('simModalDate').textContent = new Date(sim.createdAt).toLocaleString();
+                document.getElementById('simModalScore').textContent = sim.overallScore?.toFixed(2) || 'N/A';
+                document.getElementById('simModalRating').textContent = sim.qualityRating || 'N/A';
+                document.getElementById('simModalDesc').textContent = sim.description || "No description provided.";
+
+                // Render metrics table
+                const metricsContainer = document.getElementById('simModalMetrics');
+                metricsContainer.innerHTML = '';
+
+                if (sim.selectedDimensions && sim.selectedDimensions.length > 0) {
+                    sim.selectedDimensions.forEach(dim => {
+                        const score = sim.metrics ? sim.metrics[dim] : 0;
+                        const weight = sim.weights ? sim.weights[dim] : 0;
+
+                        metricsContainer.innerHTML += `
+                            <div class="flex items-center justify-between text-sm p-2 rounded hover:bg-accent/10">
+                                <div class="flex-1">
+                                    <span class="font-semibold capitalize block">${dim}</span>
+                                    <span class="text-xs text-muted-foreground">Weight: ${weight}%</span>
+                                </div>
+                                <div class="flex-1 mx-4">
+                                    <div class="h-2 bg-accent rounded-full overflow-hidden">
+                                        <div class="h-full bg-primary" style="width: ${score}%"></div>
+                                    </div>
+                                </div>
+                                <div class="font-bold w-12 text-right">${score}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    metricsContainer.innerHTML = '<p class="text-sm text-muted-foreground">No metrics breakdown available.</p>';
+                }
+
+                document.getElementById('simModal').classList.remove('hidden');
+            };
+
+            document.getElementById('closeSimModal').onclick = () => {
+                document.getElementById('simModal').classList.add('hidden');
+            };
+
+            // Close on background click
+            document.getElementById('simModal').onclick = (e) => {
+                if (e.target === document.getElementById('simModal')) {
+                    document.getElementById('simModal').classList.add('hidden');
+                }
+            };
+        });
+    </script>
+</body>
+
+</html>

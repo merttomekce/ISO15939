@@ -81,10 +81,16 @@ if (saveDraftBtn) {
         saveDraftBtn.disabled = true;
 
         try {
-            const response = await fetch('/api/measurements/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+            const token = auth.getToken();
+            const headers = { "Content-Type": "application/json" };
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            const response = await fetch("/api/measurements/save", {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify(data),
             });
 
             if (response.ok) {
@@ -111,10 +117,25 @@ if (saveDraftBtn) {
 
 // Complete Measurement
 if (completeBtn) {
-    completeBtn.addEventListener("click", () => {
+    completeBtn.addEventListener("click", async () => {
         const data = getFormData();
 
-        // Clear draft and save completed measurement
+        // Save to Backend (for history)
+        try {
+            const token = auth.getToken();
+            const headers = { "Content-Type": "application/json" };
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
+            await fetch("/api/measurements/save", {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify(data),
+            });
+        } catch (e) {
+            console.error("Failed to save to history on complete:", e);
+        }
+
+        // Clear draft and save completed measurement (Legacy/Report Page support)
         localStorage.removeItem("measurementDraft");
         FIELDS.forEach((field, index) => {
             localStorage.setItem(`step${index + 1}`, data[field]);

@@ -45,18 +45,6 @@
                         class="text-sm font-medium hover:text-primary transition-colors">References</a>
                 </nav>
             </div>
-            <button id="theme-toggle" class="p-2 rounded-lg hover:bg-accent transition-colors">
-                <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
-                    </path>
-                </svg>
-                <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
-                    </path>
-                </svg>
-            </button>
         </div>
     </header>
 
@@ -92,7 +80,18 @@
                 <p id="step6" class="text-muted-foreground">Loading...</p>
             </div>
 
-
+            <div id="aiAnalysisSection" class="hidden">
+                <h3 class="text-xl font-semibold mb-2 text-purple-600 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    AI Analysis
+                </h3>
+                <div id="aiAnalysisText"
+                    class="text-muted-foreground whitespace-pre-wrap font-sans bg-purple-50 p-4 rounded-lg border border-purple-100">
+                </div>
+            </div>
 
             <div class="mt-8 flex justify-between">
                 <a href="measurement.html"
@@ -127,9 +126,13 @@
             step4: localStorage.getItem('step4') || 'No data provided.',
             step5: localStorage.getItem('step5') || 'No data provided.',
             step6: localStorage.getItem('step6') || 'No data provided.',
+            aiAnalysis: localStorage.getItem('aiMeasurementAnalysis')
         };
 
-
+        if (stepData.aiAnalysis) {
+            // document.getElementById('aiAnalysisSection').classList.remove('hidden');
+            // document.getElementById('aiAnalysisText').textContent = stepData.aiAnalysis;
+        }
 
         document.getElementById('step1').textContent = stepData.step1;
         document.getElementById('step2').textContent = stepData.step2;
@@ -142,108 +145,135 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // --- Helper Constants ---
-            const MARGIN_LEFT = 20;
-            const MARGIN_TOP = 25;
-            const LINE_HEIGHT_NORMAL = 6;
-            const LINE_HEIGHT_HEADING = 10;
             const PAGE_HEIGHT = doc.internal.pageSize.height;
-            let yPos = MARGIN_TOP;
+            const PAGE_WIDTH = doc.internal.pageSize.width;
+            const MARGIN = 20;
+            const CONTENT_WIDTH = 170;
+            let yPos = 0;
 
-            // --- Header Function ---
-            function drawHeader() {
-                doc.setFillColor(41, 128, 185); // Professional Blue
-                doc.rect(0, 0, 210, 15, 'F'); // Blue banner top
+            // Colors
+            const HEADER_BG_COLOR = [41, 128, 185]; // #2980b9 Blue
+            const HEADER_TEXT_COLOR = [255, 255, 255]; // White
+            const SUBHEADER_COLOR = [127, 140, 141]; // #7f8c8d Gray
+            const SECTION_HEADER_Color = [52, 152, 219]; // #3498db Light Blue
+            const TEXT_COLOR = [60, 60, 60];
 
-                doc.setFontSize(22);
-                doc.setTextColor(255, 255, 255);
-                doc.setFont("helvetica", "bold");
-                doc.text("Measurement Analysis Report", 105, 10, null, null, "center");
-
-                doc.setFontSize(10);
-                doc.setTextColor(100, 100, 100);
-                doc.text(`ISO 15939 Compliance`, MARGIN_LEFT, 22);
-                doc.text(`${new Date().toLocaleString()}`, 190, 22, null, null, "right");
-
-                // Divider Line
-                doc.setDrawColor(200, 200, 200);
-                doc.setLineWidth(0.5);
-                doc.line(MARGIN_LEFT, 23, 190, 23);
-
-                yPos = 35; // Reset yPos for content
+            // Helper: Add Page Break if needed
+            function checkPageBreak(heightNeeded = 10) {
+                if (yPos + heightNeeded > PAGE_HEIGHT - MARGIN) {
+                    doc.addPage();
+                    yPos = 20;
+                    return true;
+                }
+                return false;
             }
 
-            // --- Content Renderer ---
-            function renderText(text, isMarkdown = false) {
+            // Helper: Render Formatted Text (Markdown)
+            function renderFormattedText(text, x, isMarkdown = false) {
                 if (!text) return;
 
+                if (!isMarkdown) {
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'normal');
+                    doc.setTextColor(...TEXT_COLOR);
+                    const splitText = doc.splitTextToSize(text, CONTENT_WIDTH);
+                    splitText.forEach(line => {
+                        checkPageBreak(5);
+                        doc.text(line, x, yPos);
+                        yPos += 5;
+                    });
+                    yPos += 5;
+                    return;
+                }
+
                 const lines = text.split('\n');
-
                 lines.forEach(line => {
-                    // 1. New Page Check
-                    if (yPos > PAGE_HEIGHT - 25) {
-                        doc.addPage();
-                        drawHeader();
-                    }
-
                     line = line.trim();
-                    if (!line) {
-                        yPos += 3;
-                        return;
+                    if (!line) return;
+
+                    if (line.startsWith('## ')) {
+                        checkPageBreak(12);
+                        doc.setFontSize(13);
+                        doc.setFont(undefined, 'bold');
+                        doc.setTextColor(...SECTION_HEADER_Color);
+                        doc.text(line.replace('## ', ''), x, yPos);
+                        doc.setDrawColor(...SECTION_HEADER_Color);
+                        doc.line(x, yPos + 1, x + CONTENT_WIDTH, yPos + 1); // Underline
+                        yPos += 10;
                     }
-
-                    // 2. Formatting Logic (Markdown support if enabled)
-                    if (isMarkdown && line.startsWith('## ')) {
-                        doc.setFont("helvetica", "bold");
-                        doc.setFontSize(14);
-                        doc.setTextColor(41, 128, 185);
-                        doc.text(line.replace('## ', ''), MARGIN_LEFT, yPos);
-                        yPos += LINE_HEIGHT_HEADING;
-                        doc.setDrawColor(41, 128, 185);
-                        doc.setLineWidth(0.5);
-                        doc.line(MARGIN_LEFT, yPos - 8, 150, yPos - 8);
-
-                    } else if (isMarkdown && line.startsWith('### ')) {
-                        doc.setFont("helvetica", "bold");
-                        doc.setFontSize(12);
-                        doc.setTextColor(50, 50, 50);
-                        doc.text(line.replace('### ', ''), MARGIN_LEFT, yPos);
-                        yPos += LINE_HEIGHT_HEADING - 2;
-
-                    } else if (isMarkdown && (line.startsWith('- ') || line.startsWith('* '))) {
-                        doc.setFont("helvetica", "normal");
+                    else if (line.startsWith('- ')) {
+                        checkPageBreak(6);
                         doc.setFontSize(11);
-                        doc.setTextColor(0, 0, 0);
-                        const text = line.replace(/^[-*]\s*/, '');
-                        const wrappedText = doc.splitTextToSize(text, 160);
-                        doc.text("•", MARGIN_LEFT + 2, yPos);
-                        wrappedText.forEach(l => {
-                            if (yPos > PAGE_HEIGHT - 25) { doc.addPage(); drawHeader(); }
-                            doc.text(l, MARGIN_LEFT + 8, yPos);
-                            yPos += LINE_HEIGHT_NORMAL;
-                        });
-                        yPos += 1;
+                        doc.setFont(undefined, 'normal');
+                        doc.setTextColor(...TEXT_COLOR);
 
-                    } else {
-                        // Normal Paragraph / Step Content
-                        doc.setFont("helvetica", "normal");
+                        const cleanLine = line.replace('- ', '');
+                        const boldMatch = cleanLine.match(/^(.*?)\*\*(.*?)\*\*(.*)$/);
+
+                        doc.text('•', x + 2, yPos);
+                        if (boldMatch) {
+                            const [_, pre, bold, post] = boldMatch;
+                            let curX = x + 8;
+                            if (pre) { doc.text(pre, curX, yPos); curX += doc.getTextWidth(pre); }
+                            doc.setFont(undefined, 'bold');
+                            doc.text(bold, curX, yPos);
+                            curX += doc.getTextWidth(bold);
+                            doc.setFont(undefined, 'normal');
+                            if (post) { doc.text(post, curX, yPos); }
+                        } else {
+                            const splitLine = doc.splitTextToSize(cleanLine, CONTENT_WIDTH - 8);
+                            doc.text(splitLine[0], x + 8, yPos);
+                            if (splitLine.length > 1) {
+                                splitLine.slice(1).forEach(l => {
+                                    yPos += 5;
+                                    checkPageBreak(5);
+                                    doc.text(l, x + 8, yPos);
+                                });
+                            }
+                        }
+                        yPos += 6;
+                    }
+                    else {
+                        checkPageBreak(5);
                         doc.setFontSize(11);
-                        doc.setTextColor(0, 0, 0);
-                        const cleanLine = line.replace(/\*\*/g, '');
-                        const wrappedText = doc.splitTextToSize(cleanLine, 170);
-
-                        wrappedText.forEach(l => {
-                            if (yPos > PAGE_HEIGHT - 25) { doc.addPage(); drawHeader(); }
-                            doc.text(l, MARGIN_LEFT, yPos);
-                            yPos += LINE_HEIGHT_NORMAL;
+                        doc.setFont(undefined, 'normal');
+                        doc.setTextColor(...TEXT_COLOR);
+                        const splitText = doc.splitTextToSize(line, CONTENT_WIDTH);
+                        splitText.forEach(l => {
+                            checkPageBreak(5);
+                            doc.text(l, x, yPos);
+                            yPos += 5;
                         });
                         yPos += 2;
                     }
                 });
             }
 
-            drawHeader();
+            // --- HEADER START ---
+            // Blue Background Strip
+            doc.setFillColor(...HEADER_BG_COLOR);
+            doc.rect(0, 0, PAGE_WIDTH, 40, 'F');
 
+            // Title
+            doc.setFontSize(24);
+            doc.setTextColor(...HEADER_TEXT_COLOR);
+            doc.setFont(undefined, 'bold');
+            doc.text("Measurement Report", PAGE_WIDTH / 2, 25, null, null, "center");
+
+            yPos = 50;
+
+            // Subheader Line
+            doc.setFontSize(10);
+            doc.setTextColor(...SUBHEADER_COLOR);
+            doc.setFont(undefined, 'bold');
+            doc.text("ISO 15939 Measurement Analysis", MARGIN, yPos);
+            doc.text(new Date().toLocaleString(), PAGE_WIDTH - MARGIN, yPos, null, null, "right");
+
+            doc.setDrawColor(200, 200, 200);
+            doc.line(MARGIN, yPos + 2, PAGE_WIDTH - MARGIN, yPos + 2);
+            yPos += 15;
+
+            // --- STANDARD STEPS ---
             const steps = [
                 { title: "Step 1: Information Need", content: stepData.step1 },
                 { title: "Step 2: Measurable Concept", content: stepData.step2 },
@@ -253,47 +283,37 @@
                 { title: "Step 6: Indicator", content: stepData.step6 }
             ];
 
-            // Render Steps
             steps.forEach((step) => {
-                if (yPos > PAGE_HEIGHT - 35) { doc.addPage(); drawHeader(); }
+                checkPageBreak(15);
 
-                // Step Title as Section Header
-                doc.setFont("helvetica", "bold");
+                // Section Title (Light Blue)
                 doc.setFontSize(14);
-                doc.setTextColor(41, 128, 185);
-                doc.text(step.title, MARGIN_LEFT, yPos);
-                yPos += LINE_HEIGHT_HEADING;
-                doc.setDrawColor(41, 128, 185);
-                doc.setLineWidth(0.5);
-                doc.line(MARGIN_LEFT, yPos - 8, 150, yPos - 8);
+                doc.setTextColor(...SECTION_HEADER_Color);
+                doc.setFont(undefined, 'bold');
+                doc.text(step.title, MARGIN, yPos);
+                yPos += 7;
 
-                renderText(step.content, false);
+                // Content
+                renderFormattedText(step.content, MARGIN, false);
                 yPos += 5;
             });
 
-            // Render AI Analysis
+            // --- AI ANALYSIS SECTION ---
             if (stepData.aiAnalysis) {
-                if (yPos > PAGE_HEIGHT - 40) { doc.addPage(); drawHeader(); }
+                checkPageBreak(50);
+                yPos += 10;
 
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(16);
-                doc.setTextColor(142, 68, 173); // Purple for AI Section
-                doc.text("AI Analysis Report", MARGIN_LEFT, yPos);
-                yPos += LINE_HEIGHT_HEADING;
-                doc.setDrawColor(142, 68, 173);
-                doc.setLineWidth(0.5);
-                doc.line(MARGIN_LEFT, yPos - 8, 210 - MARGIN_LEFT, yPos - 8);
+                // Header Block for AI
+                doc.setFillColor(...HEADER_BG_COLOR);
+                doc.roundedRect(MARGIN, yPos, PAGE_WIDTH - (MARGIN * 2), 12, 1, 1, 'F');
 
-                renderText(stepData.aiAnalysis, true);
-            }
+                doc.setFontSize(12);
+                doc.setTextColor(...HEADER_TEXT_COLOR);
+                doc.setFont(undefined, 'bold');
+                doc.text("AI Quality Analysis Compliance Check", PAGE_WIDTH / 2, yPos + 8, null, null, "center");
+                yPos += 20;
 
-            // Footer
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(9);
-                doc.setTextColor(150, 150, 150);
-                doc.text(`Page ${i} of ${pageCount}`, 105, PAGE_HEIGHT - 10, null, null, "center");
+                renderFormattedText(stepData.aiAnalysis, MARGIN, true);
             }
 
             return doc;
@@ -320,7 +340,6 @@
             doc.save('Measurement_Report.pdf');
         });
     </script>
-    <script src="script.js"></script>
 </body>
 
 </html>

@@ -22,12 +22,12 @@ function initSimulator() {
   // Custom Scenario selection
   document.getElementById('custom-scenario-radio').addEventListener('change', selectCustomScenario);
   document.querySelector('.custom-scenario-card').addEventListener('click', (e) => {
-      if (e.target.tagName === 'INPUT' && e.target.type === 'text' || e.target.tagName === 'TEXTAREA') {
-          return;
-      }
-      if (!document.getElementById('custom-scenario-radio').checked) {
-          document.getElementById('custom-scenario-radio').click();
-      }
+    if (e.target.tagName === 'INPUT' && e.target.type === 'text' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+    if (!document.getElementById('custom-scenario-radio').checked) {
+      document.getElementById('custom-scenario-radio').click();
+    }
   });
 
   document.getElementById('project-name').addEventListener('input', (e) => {
@@ -43,12 +43,12 @@ function initSimulator() {
       const dimension = e.target.value;
       if (e.target.checked) {
         if (!state.selectedDimensions.includes(dimension)) {
-            state.selectedDimensions.push(dimension);
+          state.selectedDimensions.push(dimension);
         }
       } else {
         state.selectedDimensions = state.selectedDimensions.filter((d) => d !== dimension);
       }
-      
+
       // When a dimension is manually changed, switch to a custom mode
       // but do NOT clear the dimension that was just changed.
       document.getElementById('custom-scenario-radio').checked = true;
@@ -74,19 +74,19 @@ function initSimulator() {
 }
 
 function selectCustomScenario() {
-    // This function is called by an explicit click on the custom scenario radio/label.
-    // Its purpose is to provide a clean slate.
-    if (document.getElementById('custom-scenario-radio').checked) {
-        document.getElementById('custom-scenario-inputs').classList.remove('hidden');
+  // This function is called by an explicit click on the custom scenario radio/label.
+  // Its purpose is to provide a clean slate.
+  if (document.getElementById('custom-scenario-radio').checked) {
+    document.getElementById('custom-scenario-inputs').classList.remove('hidden');
 
-        // Deselect case studies
-        document.querySelectorAll('.case-study-card').forEach(c => c.classList.remove('selected'));
-        state.caseStudy = null;
+    // Deselect case studies
+    document.querySelectorAll('.case-study-card').forEach(c => c.classList.remove('selected'));
+    state.caseStudy = null;
 
-        // Clear all dimension selections
-        document.querySelectorAll(".dimension-checkbox input").forEach((cb) => (cb.checked = false));
-        state.selectedDimensions = [];
-    }
+    // Clear all dimension selections
+    document.querySelectorAll(".dimension-checkbox input").forEach((cb) => (cb.checked = false));
+    state.selectedDimensions = [];
+  }
 }
 
 function selectCaseStudy(card) {
@@ -125,34 +125,34 @@ function selectCaseStudy(card) {
 }
 
 function nextStep() {
-  
+
   if (state.currentStep === 1) {
     const useCustomScenario = document.getElementById('custom-scenario-radio').checked;
     if (useCustomScenario && !state.customScenario.name.trim()) {
-        alert('Please enter a Project Name for your custom scenario.');
-        return;
+      alert('Please enter a Project Name for your custom scenario.');
+      return;
     }
     if (state.selectedDimensions.length === 0) {
       alert("Please select at least one quality dimension.")
       return
     }
     generateWeightsStep()
-  } 
-  
+  }
+
   else if (state.currentStep === 2) {
     const total = Object.values(state.weights).reduce((sum, w) => sum + w, 0)
-    
-    if (Math.abs(total - 100) > 0.5) { 
+
+    if (Math.abs(total - 100) > 0.5) {
       alert("Total weight must equal 100%")
       return
     }
     generateMetricsStep()
-  } 
-  
+  }
+
   else if (state.currentStep === 3) {
-    
+
     const missingMetrics = state.selectedDimensions.filter(dim => state.metrics[dim] === undefined || state.metrics[dim] === "");
-    
+
     if (missingMetrics.length > 0) {
       alert("Please enter values for all dimensions.")
       return
@@ -469,171 +469,231 @@ function getRecommendation(dimension, score) {
 // simulator.js -> finishSimulator function
 
 async function finishSimulator() {
-    const finishBtn = document.getElementById("next-btn");
-    
-    // 1. Provide immediate user feedback
-    if(finishBtn) {
-        finishBtn.disabled = true;
-        finishBtn.textContent = "Processing...";
+  const finishBtn = document.getElementById("next-btn");
+
+  // 1. Provide immediate user feedback
+  if (finishBtn) {
+    finishBtn.disabled = true;
+    finishBtn.textContent = "Processing...";
+  }
+
+  if (!window.jspdf) {
+    alert("PDF library failed to load.");
+    if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = "Finish"; }
+    return;
+  }
+
+  // --- DATABASE SAVE OPERATION (BACKGROUND) ---
+  // Removed 'await' to prevent blocking the PDF generation process.
+  const payload = {
+    projectName: state.customScenario.name || (state.caseStudy ? state.caseStudy + " Case Study" : "Unnamed Project"),
+    description: state.customScenario.description,
+    overallScore: Number(document.getElementById("overall-score").textContent),
+    qualityRating: document.getElementById("quality-rating").textContent,
+    selectedDimensions: state.selectedDimensions,
+    weights: state.weights,
+    metrics: state.metrics
+  };
+
+  // Send request but don't wait for response (Fire and Forget strategy)
+  // Send request but don't wait for response (Fire and Forget strategy)
+  const token = auth.getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  fetch('/api/simulation/save', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(payload)
+  }).then(res => {
+    if (res.ok) console.log("Data successfully saved in background.");
+    else console.error("Database save error.");
+  }).catch(err => console.error("Connection error:", err));
+
+  // --- PDF GENERATION (START IMMEDIATELY) ---
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const PAGE_WIDTH = doc.internal.pageSize.width;
+    const PAGE_HEIGHT = doc.internal.pageSize.height;
+    const MARGIN = 20;
+    let yPos = 0;
+
+    // Colors
+    const HEADER_BG_COLOR = [41, 128, 185]; // Blue
+    const HEADER_TEXT_COLOR = [255, 255, 255]; // White
+    const SUBHEADER_COLOR = [127, 140, 141]; // Gray
+    const SECTION_HEADER_Color = [52, 152, 219]; // Light Blue
+
+    // Helper: Add Page Break
+    function checkPageBreak(heightNeeded = 10) {
+      if (yPos + heightNeeded > PAGE_HEIGHT - MARGIN) {
+        doc.addPage();
+        yPos = 20;
+        return true;
+      }
+      return false;
     }
 
-    if (!window.jspdf) {
-        alert("PDF library failed to load.");
-        if(finishBtn) { finishBtn.disabled = false; finishBtn.textContent = "Finish"; }
-        return;
+    // --- HEADER ---
+    // Blue Background
+    doc.setFillColor(...HEADER_BG_COLOR);
+    doc.rect(0, 0, PAGE_WIDTH, 40, 'F');
+
+    // Title
+    doc.setFontSize(24);
+    doc.setTextColor(...HEADER_TEXT_COLOR);
+    doc.setFont(undefined, 'bold');
+    doc.text("Simulation Report", PAGE_WIDTH / 2, 25, null, null, "center");
+
+    yPos = 50;
+
+    // Subheader
+    const date = new Date().toLocaleString();
+    const projectName = payload.projectName;
+    const description = payload.description || "No description provided.";
+    const finalScore = payload.overallScore;
+    const qualityRating = payload.qualityRating;
+
+    doc.setFontSize(10);
+    doc.setTextColor(...SUBHEADER_COLOR);
+    doc.setFont(undefined, 'bold');
+    doc.text("ISO 15939 Simulation Results", MARGIN, yPos);
+    doc.text(date, PAGE_WIDTH - MARGIN, yPos, null, null, "right");
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(MARGIN, yPos + 2, PAGE_WIDTH - MARGIN, yPos + 2);
+    yPos += 15;
+
+    // Project Info
+    doc.setFontSize(14);
+    doc.setTextColor(...SECTION_HEADER_Color);
+    doc.setFont(undefined, 'bold');
+    doc.text("Project Overview", MARGIN, yPos);
+    yPos += 8;
+
+    doc.setFontSize(12);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Project Name: ${projectName}`, MARGIN, yPos);
+    yPos += 7;
+
+    const splitDescription = doc.splitTextToSize(`Description: ${description}`, 170);
+    doc.text(splitDescription, MARGIN, yPos);
+    yPos += (splitDescription.length * 6) + 10;
+
+    // Score Box
+    doc.setDrawColor(0, 0, 0);
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(MARGIN, yPos, PAGE_WIDTH - (MARGIN * 2), 30, 2, 2, 'F');
+
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Overall Score: ${finalScore} / 100`, PAGE_WIDTH / 2, yPos + 12, null, null, "center");
+
+    doc.setFontSize(14);
+    if (parseFloat(finalScore) >= 80) doc.setTextColor(39, 174, 96); // Green
+    else if (parseFloat(finalScore) < 60) doc.setTextColor(192, 57, 43); // Red
+    else doc.setTextColor(52, 152, 219); // Blue
+
+    doc.text(`Rating: ${qualityRating}`, PAGE_WIDTH / 2, yPos + 22, null, null, "center");
+    yPos += 45;
+
+    // Chart Operations
+    const canvas = document.getElementById('radarChart');
+    const chart = window.radarChartInstance;
+
+    if (canvas && chart) {
+      checkPageBreak(160);
+
+      // Adjust colors for PDF rendering
+      const originalScales = JSON.parse(JSON.stringify(chart.options.scales));
+      const originalBorderColor = chart.data.datasets[0].borderColor;
+      const originalBgColor = chart.data.datasets[0].backgroundColor;
+
+      chart.options.scales.r.pointLabels.color = '#000000';
+      chart.options.scales.r.pointLabels.font = { size: 14, weight: 'bold' };
+      chart.options.scales.r.ticks.color = '#000000';
+      chart.options.scales.r.ticks.backdropColor = 'transparent';
+      chart.options.scales.r.grid.color = '#999999';
+      chart.data.datasets[0].borderColor = '#000000';
+      chart.data.datasets[0].backgroundColor = 'rgba(100, 100, 100, 0.2)';
+
+      chart.update();
+
+      const canvasImg = canvas.toDataURL("image/png", 1.0);
+      const imgWidth = 140;
+      const imgHeight = 140;
+      const xPos = (PAGE_WIDTH - imgWidth) / 2;
+
+      doc.addImage(canvasImg, 'PNG', xPos, yPos, imgWidth, imgHeight);
+      yPos += imgHeight + 15;
+
+      // Revert chart colors
+      chart.options.scales = originalScales;
+      chart.data.datasets[0].borderColor = originalBorderColor;
+      chart.data.datasets[0].backgroundColor = originalBgColor;
+      chart.update();
     }
 
-    // --- DATABASE SAVE OPERATION (BACKGROUND) ---
-    // Removed 'await' to prevent blocking the PDF generation process.
-    const payload = {
-        projectName: state.customScenario.name || (state.caseStudy ? state.caseStudy + " Case Study" : "Unnamed Project"),
-        description: state.customScenario.description,
-        overallScore: Number(document.getElementById("overall-score").textContent),
-        qualityRating: document.getElementById("quality-rating").textContent,
-        selectedDimensions: state.selectedDimensions,
-        weights: state.weights,
-        metrics: state.metrics
-    };
+    // Detailed Breakdown
+    checkPageBreak(20);
+    doc.setFontSize(14);
+    doc.setTextColor(...SECTION_HEADER_Color);
+    doc.setFont(undefined, 'bold');
+    doc.text("Detailed Breakdown", MARGIN, yPos);
+    yPos += 10;
+    doc.setFontSize(11);
 
-    // Send request but don't wait for response (Fire and Forget strategy)
-    fetch('/api/simulation/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    }).then(res => {
-        if(res.ok) console.log("Data successfully saved in background.");
-        else console.error("Database save error.");
-    }).catch(err => console.error("Connection error:", err));
+    state.selectedDimensions.forEach((dim) => {
+      checkPageBreak(30);
 
-    // --- PDF GENERATION (START IMMEDIATELY) ---
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+      const weight = state.weights[dim];
+      const score = state.metrics[dim];
+      const weighted = ((score * weight) / 100).toFixed(1);
+      const recommendation = score < 60 ? getRecommendation(dim, score) : "Satisfactory performance.";
 
-        const date = new Date().toLocaleString();
-        const projectName = payload.projectName;
-        const description = payload.description || "No description provided.";
-        const finalScore = payload.overallScore;
-        const qualityRating = payload.qualityRating;
+      // Dimension Header
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(44, 62, 80); // Dark Gray/Blue
+      doc.text(dim.toUpperCase(), MARGIN, yPos);
+      yPos += 6;
 
-        doc.setFontSize(20);
-        doc.setTextColor(40, 40, 40);
-        doc.text("Quality Assessment Report (ISO 15939)", 105, 20, null, null, "center");
-        doc.setLineWidth(0.5);
-        doc.line(20, 25, 190, 25);
+      // Stats
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Weight: ${weight}%  |  Score: ${score}  |  Weighted Impact: ${weighted}`, MARGIN, yPos);
+      yPos += 6;
 
-        doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Project Name: ${projectName}`, 20, 35);
-        doc.text(`Date: ${date}`, 20, 42);
+      // Recommendation
+      doc.setTextColor(80, 80, 80);
+      const splitRec = doc.splitTextToSize(`Recommendation: ${recommendation}`, 170);
+      doc.text(splitRec, MARGIN, yPos);
 
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        const splitDescription = doc.splitTextToSize(`Description: ${description}`, 170);
-        doc.text(splitDescription, 20, 50);
+      yPos += (splitRec.length * 5) + 10;
+    });
 
-        let yPos = 50 + (splitDescription.length * 5) + 10;
+    const safeFileName = projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    doc.save(`${safeFileName}_report.pdf`);
 
-        doc.setDrawColor(0, 0, 0);
-        doc.setFillColor(240, 240, 240);
-        doc.rect(20, yPos, 170, 25, 'F');
-        doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Overall Score: ${finalScore} / 100`, 105, yPos + 10, null, null, "center");
-        doc.setFontSize(12);
-        if(parseFloat(finalScore) >= 80) doc.setTextColor(0, 150, 0);
-        else if(parseFloat(finalScore) < 60) doc.setTextColor(200, 0, 0);
-        doc.text(`Rating: ${qualityRating}`, 105, yPos + 20, null, null, "center");
-        
-        yPos += 35;
+    // Reset button and prompt user upon completion
+    setTimeout(() => {
+      if (finishBtn) {
+        finishBtn.disabled = false;
+        finishBtn.textContent = "Finish";
+      }
+      if (confirm("Report downloaded! Start a new simulation?")) {
+        resetSimulator();
+      }
+    }, 500);
 
-        // Chart Operations
-        const canvas = document.getElementById('radarChart');
-        const chart = window.radarChartInstance;
-
-        if (canvas && chart) {
-            // Adjust colors for PDF rendering (Dark mode -> Light mode)
-            const originalScales = JSON.parse(JSON.stringify(chart.options.scales));
-            const originalBorderColor = chart.data.datasets[0].borderColor;
-            const originalBgColor = chart.data.datasets[0].backgroundColor;
-
-            chart.options.scales.r.pointLabels.color = '#000000'; 
-            chart.options.scales.r.pointLabels.font = { size: 14, weight: 'bold' }; 
-            chart.options.scales.r.ticks.color = '#000000';
-            chart.options.scales.r.ticks.backdropColor = 'transparent'; 
-            chart.options.scales.r.grid.color = '#999999'; 
-            chart.data.datasets[0].borderColor = '#000000'; 
-            chart.data.datasets[0].backgroundColor = 'rgba(100, 100, 100, 0.2)'; 
-
-            chart.update();
-
-            const canvasImg = canvas.toDataURL("image/png", 1.0);
-            const imgWidth = 150;
-            const imgHeight = 150;
-            const xPos = (210 - imgWidth) / 2;
-
-            if (yPos + imgHeight > 280) {
-                doc.addPage();
-                yPos = 20;
-            }
-            doc.addImage(canvasImg, 'PNG', xPos, yPos, imgWidth, imgHeight);
-            yPos += imgHeight + 10;
-
-            // Revert chart colors to original state
-            chart.options.scales = originalScales;
-            chart.data.datasets[0].borderColor = originalBorderColor;
-            chart.data.datasets[0].backgroundColor = originalBgColor;
-            chart.update();
-        }
-
-        doc.setFontSize(14);
-        doc.setTextColor(0, 0, 0);
-        doc.text("Detailed Breakdown", 20, yPos);
-        yPos += 10;
-        doc.setFontSize(10);
-
-        state.selectedDimensions.forEach((dim) => {
-            if (yPos > 270) {
-                doc.addPage();
-                yPos = 20;
-            }
-            const weight = state.weights[dim];
-            const score = state.metrics[dim];
-            const weighted = ((score * weight) / 100).toFixed(1);
-            const recommendation = score < 60 ? getRecommendation(dim, score) : "Satisfactory.";
-
-            doc.setFont(undefined, 'bold');
-            doc.text(dim.toUpperCase(), 20, yPos);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Weight: ${weight}% | Score: ${score} | Weighted Impact: ${weighted}`, 20, yPos + 5);
-            
-            doc.setTextColor(80, 80, 80);
-            const splitRec = doc.splitTextToSize(`Recommendation: ${recommendation}`, 170);
-            doc.text(splitRec, 20, yPos + 10);
-            
-            doc.setTextColor(0, 0, 0);
-            yPos += 15 + (splitRec.length * 4);
-        });
-
-        const safeFileName = projectName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        doc.save(`${safeFileName}_report.pdf`);
-
-        // Reset button and prompt user upon completion
-        setTimeout(() => {
-            if(finishBtn) {
-                finishBtn.disabled = false;
-                finishBtn.textContent = "Finish";
-            }
-            if(confirm("Report downloaded! Start a new simulation?")) {
-                resetSimulator();
-            }
-        }, 500);
-
-    } catch (e) {
-        console.error("PDF Generation Error:", e);
-        alert("An error occurred while generating the PDF.");
-        if(finishBtn) { finishBtn.disabled = false; finishBtn.textContent = "Finish"; }
-    }
+  } catch (e) {
+    console.error("PDF Generation Error:", e);
+    alert("An error occurred while generating the PDF.");
+    if (finishBtn) { finishBtn.disabled = false; finishBtn.textContent = "Finish"; }
+  }
 }
 
 function resetSimulator() {
@@ -646,11 +706,11 @@ function resetSimulator() {
 
   document.getElementById('project-name').value = '';
   document.getElementById('project-description').value = '';
-  
+
   document.querySelectorAll(".dimension-checkbox input").forEach((cb) => (cb.checked = false));
-  
+
   document.querySelectorAll(".case-study-card").forEach((c) => c.classList.remove("selected"));
-  
+
   document.getElementById('custom-scenario-inputs').classList.add('hidden');
   document.getElementById('custom-scenario-radio').checked = false;
 

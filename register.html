@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ISO 15939</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: 'hsl(var(--primary))',
+                        'primary-foreground': 'hsl(var(--primary-foreground))',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background text-foreground transition-colors duration-300">
+    <header class="border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-50">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="index.html" class="text-xl font-bold text-primary">ISO 15939</a>
+                <nav class="hidden md:flex gap-6">
+                    <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
+                    <a href="simulator.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Simulator</a>
+                    <a href="measurement.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">Measurement</a>
+                    <a href="references.html"
+                        class="text-sm font-medium hover:text-primary transition-colors">References</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="auth-container"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-16 flex justify-center">
+        <div class="w-full max-w-md bg-card border border-border rounded-lg p-8 shadow-lg">
+            <h1 class="text-2xl font-bold mb-6 text-center">Register</h1>
+
+            <form id="registerForm" class="space-y-4" novalidate>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Username</label>
+                    <input type="text" id="username"
+                        class="w-full px-3 py-2 border border-border rounded-lg bg-background">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Password (min 6 chars)</label>
+                    <div class="relative">
+                        <input type="password" id="password"
+                            class="w-full px-3 py-2 border border-border rounded-lg bg-background pr-10">
+                        <button type="button" onclick="togglePassword('password')"
+                            class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-primary">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Confirm Password</label>
+                    <div class="relative">
+                        <input type="password" id="confirmPassword"
+                            class="w-full px-3 py-2 border border-border rounded-lg bg-background pr-10">
+                        <button type="button" onclick="togglePassword('confirmPassword')"
+                            class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-primary">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                </path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="errorMessage" class="text-red-500 text-sm hidden"></div>
+                <div id="successMessage" class="text-green-500 text-sm hidden">Registration successful! Redirecting...
+                </div>
+
+                <button type="submit"
+                    class="w-full py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 font-medium">Register</button>
+            </form>
+
+            <p class="mt-4 text-center text-sm text-muted-foreground">
+                Already have an account? <a href="login.html" class="text-primary hover:underline">Login</a>
+            </p>
+        </div>
+    </main>
+
+    <script src="auth.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorElement = document.getElementById('errorMessage');
+            const successElement = document.getElementById('successMessage');
+            const submitBtn = document.querySelector('button[type="submit"]');
+
+            // Client-side Validation (Manual since novalidate is on)
+            if (!username || !password || !confirmPassword) {
+                errorElement.textContent = "All fields are required.";
+                errorElement.classList.remove('hidden');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorElement.textContent = "Passwords do not match.";
+                errorElement.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 6) {
+                errorElement.textContent = "Password must be at least 6 characters.";
+                errorElement.classList.remove('hidden');
+                return;
+            }
+
+            // Reset UI
+            errorElement.classList.add('hidden');
+            successElement.classList.add('hidden');
+
+            // Loading State
+            const originalBtnText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Registering...";
+
+            try {
+                await auth.register(username, password);
+                successElement.textContent = "Registration successful! Redirecting to login...";
+                successElement.classList.remove('hidden');
+
+                // Clear form
+                document.getElementById('registerForm').reset();
+
+                setTimeout(() => window.location.href = 'login.html', 1500);
+            } catch (err) {
+                console.error("Registration error:", err);
+                errorElement.textContent = (err.message || "An unexpected error occurred.") + (err.cause ? ` (${err.cause})` : "");
+                errorElement.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        });
+
+        function togglePassword(fieldId) {
+            const input = document.getElementById(fieldId);
+            input.type = input.type === "password" ? "text" : "password";
+        }
+    </script>
+</body>
+
+</html>
