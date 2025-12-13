@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const simulationSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false
+  },
   projectName: String,
   description: String,
   overallScore: Number,

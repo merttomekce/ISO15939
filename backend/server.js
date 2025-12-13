@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import measurementRoutes from "./routes/measurementRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import simulationRoutes from "./routes/simulationRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ mongoose.connect(MONGO_URI)
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
 // API Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/measurements", measurementRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/simulation", simulationRoutes);

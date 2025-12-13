@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const measurementSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false // Optional for guest users
+  },
   infoNeed: { type: String, default: "" },
   measurableConcept: { type: String, default: "" },
   entity: { type: String, default: "" },
