@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { ToastContainer, useToast } from "@/components/Toast"
+import { ConfirmationDialog } from "@/components/ConfirmationDialog"
 
 export default function Dashboard() {
     const { user, isAuthenticated, token } = useAuth()
@@ -16,6 +18,50 @@ export default function Dashboard() {
     // Modal State
     const [selectedSim, setSelectedSim] = useState<any>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+
+    // Delete State
+    const { toasts, addToast, removeToast } = useToast()
+    const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean, type: 'measurement' | 'simulation' | null, id: string | null }>({
+        isOpen: false,
+        type: null,
+        id: null
+    })
+
+    const requestDelete = (type: 'measurement' | 'simulation', id: string) => {
+        setDeleteConfirm({ isOpen: true, type, id })
+    }
+
+    const performDelete = async () => {
+        if (!deleteConfirm.id || !deleteConfirm.type) return;
+
+        const endpoint = deleteConfirm.type === 'measurement'
+            ? `/api/measurements/${deleteConfirm.id}`
+            : `/api/simulation/${deleteConfirm.id}`;
+
+        try {
+            const res = await fetch(endpoint, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+
+            if (res.ok) {
+                addToast(`${deleteConfirm.type === 'measurement' ? 'Measurement' : 'Simulation'} deleted successfully.`, "success")
+                // Update local state
+                if (deleteConfirm.type === 'measurement') {
+                    setMeasurements(prev => prev.filter(m => m._id !== deleteConfirm.id))
+                } else {
+                    setSimulations(prev => prev.filter(s => s._id !== deleteConfirm.id))
+                }
+            } else {
+                addToast("Failed to delete item.", "error")
+            }
+        } catch (e) {
+            console.error("Delete error", e)
+            addToast("An error occurred.", "error")
+        } finally {
+            setDeleteConfirm({ isOpen: false, type: null, id: null })
+        }
+    }
 
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -45,6 +91,16 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
+            <ConfirmationDialog
+                isOpen={deleteConfirm.isOpen}
+                title="Confirm Deletion"
+                description="Are you sure you want to delete this item? This action cannot be undone."
+                confirmText="Delete"
+                variant="destructive"
+                onConfirm={performDelete}
+                onCancel={() => setDeleteConfirm({ isOpen: false, type: null, id: null })}
+            />
 
             <main className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold mb-2">Welcome, {user}</h1>
@@ -75,12 +131,21 @@ export default function Dashboard() {
                                             I will link to /measurement but populating it might be tricky without a dedicated ID loader. 
                                             For now, just showing the list is mostly what's needed, or a simple disabled button.
                                         */}
-                                                <Link
-                                                    href={`/measurement?id=${m._id}`}
-                                                    className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity"
-                                                >
-                                                    View
-                                                </Link>
+                                                <div className="flex gap-2 items-center">
+                                                    <Link
+                                                        href={`/measurement?id=${m._id}`}
+                                                        className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity"
+                                                    >
+                                                        View
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => requestDelete('measurement', m._id)}
+                                                        className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                                                        title="Delete"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
@@ -106,12 +171,21 @@ export default function Dashboard() {
                                                     <p className="font-medium text-sm truncate">{s.projectName || "Unnamed Project"}</p>
                                                     <p className="text-xs text-muted-foreground">Score: {s.overallScore?.toFixed(2)} • {new Date(s.createdAt).toLocaleDateString()}</p>
                                                 </div>
-                                                <button
-                                                    onClick={() => { setSelectedSim(s); setIsModalOpen(true); }}
-                                                    className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:opacity-90 whitespace-nowrap"
-                                                >
-                                                    View
-                                                </button>
+                                                <div className="flex gap-2 items-center">
+                                                    <button
+                                                        onClick={() => { setSelectedSim(s); setIsModalOpen(true); }}
+                                                        className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:opacity-90 whitespace-nowrap"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    <button
+                                                        onClick={() => requestDelete('simulation', s._id)}
+                                                        className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                                                        title="Delete"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
