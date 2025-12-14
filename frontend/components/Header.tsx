@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ModeToggle } from "./ModeToggle"
 import { useAuth } from "@/context/AuthContext"
 import { useState, useRef, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 
 function AuthButtons() {
     const { user, isAuthenticated, logout } = useAuth()
@@ -42,21 +43,29 @@ function AuthButtons() {
                 </svg>
             </button>
 
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50">
-                    <div className="px-4 py-2 border-b border-border">
-                        <p className="text-sm font-medium text-foreground truncate">{user}</p>
-                    </div>
-                    <Link href="/dashboard" className="block px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground" onClick={() => setIsOpen(false)}>Dashboard</Link>
-                    <Link href="/settings" className="block px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground" onClick={() => setIsOpen(false)}>Settings</Link>
-                    <button
-                        onClick={() => { setIsOpen(false); logout(); }}
-                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-destructive"
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg py-1 z-50 origin-top-right"
                     >
-                        Logout
-                    </button>
-                </div>
-            )}
+                        <div className="px-4 py-2 border-b border-border">
+                            <p className="text-sm font-medium text-foreground truncate">{user}</p>
+                        </div>
+                        <Link href="/dashboard" className="block px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground" onClick={() => setIsOpen(false)}>Dashboard</Link>
+                        <Link href="/settings" className="block px-4 py-2 text-sm text-foreground hover:bg-accent hover:text-accent-foreground" onClick={() => setIsOpen(false)}>Settings</Link>
+                        <button
+                            onClick={() => { setIsOpen(false); logout(); }}
+                            className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-destructive"
+                        >
+                            Logout
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
