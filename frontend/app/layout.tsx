@@ -19,6 +19,11 @@ import ClientShell from "@/components/ClientShell";
 export const metadata: Metadata = {
   title: "ISO 15939 Quality Assessment",
   description: "Measure, analyze, and improve software quality using ISO 15939 standards",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

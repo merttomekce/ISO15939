@@ -15,8 +15,12 @@ export default function References() {
     }
 
     const item = {
-        hidden: { opacity: 0, y: 20 },
-        show: { opacity: 1, y: 0 }
+        hidden: { opacity: 0, y: 30 },
+        show: {
+            opacity: 1,
+            y: 0,
+            transition: { type: "spring" as const, stiffness: 50, damping: 20 }
+        }
     }
 
     return (
@@ -26,19 +30,20 @@ export default function References() {
             <main className="flex-1">
                 {/* Hero Section */}
                 <section className="relative overflow-hidden py-16 md:py-24">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background"></div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background pointer-events-none"></div>
                     <div className="container mx-auto px-4 relative z-10">
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            variants={container}
+                            initial="hidden"
+                            animate="show"
                             className="max-w-3xl mx-auto text-center space-y-4"
                         >
-                            <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
+                            <motion.h1 variants={item} className="text-4xl md:text-6xl font-bold tracking-tight">
                                 References & <span className="text-primary">FAQ</span>
-                            </h1>
-                            <p className="text-lg text-muted-foreground">
+                            </motion.h1>
+                            <motion.p variants={item} className="text-xl text-muted-foreground">
                                 Access project documentation, standards, and answers to common questions.
-                            </p>
+                            </motion.p>
                         </motion.div>
                     </div>
                 </section>

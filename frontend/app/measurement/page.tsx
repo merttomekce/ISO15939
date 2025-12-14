@@ -6,10 +6,31 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import jsPDF from 'jspdf';
+import Link from 'next/link';
 
 const FIELDS = [
     "infoNeed", "measurableConcept", "entity", "attribute", "baseMeasure", "derivedMeasure", "indicator"
 ]
+
+const container = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.2,
+            delayChildren: 0.1
+        }
+    }
+}
+
+const item = {
+    hidden: { opacity: 0, y: 30 },
+    show: {
+        opacity: 1,
+        y: 0,
+        transition: { type: "spring" as const, stiffness: 50, damping: 20 }
+    }
+}
 
 
 
@@ -393,185 +414,200 @@ function MeasurementContent() {
 
 
     return (
-        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto flex flex-col">
-            <header className="mb-6 text-center space-y-6">
-                <h1 className="text-3xl font-bold">Measurement Wizard</h1>
+        <div className="min-h-screen bg-background relative overflow-x-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background z-0 pointer-events-none"></div>
 
-                {/* 7 Equal Boxes Interactive Progress Bar */}
-                <div className="grid grid-cols-7 gap-1 max-w-6xl mx-auto w-full px-2">
-                    {steps.map((s, idx) => {
-                        let bgClass = "bg-neutral-900 text-neutral-500 border border-neutral-800"; // Default
+            <div className="pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto flex flex-col relative z-10 min-h-screen">
 
-                        if (currentStep === idx) {
-                            bgClass = "bg-primary text-primary-foreground shadow-lg scale-105 ring-2 ring-offset-2 ring-primary z-10 border-primary";
-                        } else if (idx < currentStep) {
-                            bgClass = "bg-primary/40 text-primary-foreground/90 border-primary/40";
-                        }
+                <motion.header
+                    variants={container}
+                    initial="hidden"
+                    animate="show"
+                    className="mb-8 text-center space-y-4 relative z-10"
+                >
+                    <motion.h1 variants={item} className="text-4xl md:text-6xl font-bold tracking-tight text-foreground">
+                        Measurement <span className="text-primary">Wizard</span>
+                    </motion.h1>
+                    <motion.p variants={item} className="text-xl text-muted-foreground">
+                        Guided step-by-step process based on ISO 15939
+                    </motion.p>
 
-                        return (
-                            <button
-                                key={idx}
-                                onClick={() => setCurrentStep(idx)}
-                                className={`
+                    {/* 7 Equal Boxes Interactive Progress Bar */}
+                    <motion.div variants={item} className="grid grid-cols-7 gap-1 max-w-6xl mx-auto w-full px-2 mt-8">
+                        {steps.map((s, idx) => {
+                            let bgClass = "bg-neutral-900 text-neutral-500 border border-neutral-800"; // Default
+
+                            if (currentStep === idx) {
+                                bgClass = "bg-primary text-primary-foreground shadow-lg scale-105 ring-2 ring-offset-2 ring-primary z-10 border-primary";
+                            } else if (idx < currentStep) {
+                                bgClass = "bg-primary/40 text-primary-foreground/90 border-primary/40";
+                            }
+
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentStep(idx)}
+                                    className={`
                                     h-20 rounded-lg transition-all duration-300 flex flex-col items-center justify-center p-1
                                     hover:opacity-90 hover:scale-105 transform
                                     ${bgClass}
                                 `}
-                            >
-                                <span className="text-lg font-bold leading-none mb-1">{idx + 1}</span>
-                                <span className="text-[10px] md:text-xs font-medium leading-tight text-center line-clamp-2 px-1">
-                                    {s.title}
-                                </span>
-                            </button>
-                        )
-                    })}
-                </div>
-            </header>
-
-            <main className="flex-1 flex flex-col justify-center min-h-[400px]">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={currentStep}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className="bg-card border border-border rounded-2xl p-8 shadow-lg h-full"
-                    >
-                        {currentStepData.component}
+                                >
+                                    <span className="text-lg font-bold leading-none mb-1">{idx + 1}</span>
+                                    <span className="text-[10px] md:text-xs font-medium leading-tight text-center line-clamp-2 px-1">
+                                        {s.title}
+                                    </span>
+                                </button>
+                            )
+                        })}
                     </motion.div>
-                </AnimatePresence>
-            </main>
+                </motion.header>
 
-            {/* Navigation */}
-            <div className="mt-8 flex justify-between gap-4">
-                <button
-                    onClick={handleBack}
-                    disabled={currentStep === 0}
-                    className="px-6 py-3 rounded-xl font-medium transition-colors hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent"
-                >
-                    ← Back
-                </button>
+                <main className="flex-1 flex flex-col justify-center min-h-[400px] relative z-10">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={currentStep}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            transition={{ duration: 0.2 }}
+                            className="bg-card border border-border rounded-2xl p-8 shadow-lg h-full"
+                        >
+                            {currentStepData.component}
+                        </motion.div>
+                    </AnimatePresence>
+                </main>
 
-                {isLastStep ? (
-                    <div className="flex gap-3">
-                        <button
-                            onClick={startAnalysis}
-                            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-2"
-                        >
-                            <span>Analyze with AI</span>
-                        </button>
-                        <button
-                            onClick={() => saveDraft(true)}
-                            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg transition-transform hover:scale-105"
-                        >
-                            Save & Finish
-                        </button>
-                    </div>
-                ) : (
+                {/* Navigation */}
+                <div className="mt-8 flex justify-between gap-4">
                     <button
-                        onClick={handleNext}
-                        className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-md transition-transform hover:scale-105"
+                        onClick={handleBack}
+                        disabled={currentStep === 0}
+                        className="px-6 py-3 rounded-xl font-medium transition-colors hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent"
                     >
-                        Next →
+                        ← Back
                     </button>
-                )}
-            </div>
 
-            {/* Overwrite Confirmation Modal (Small) */}
-            <AnimatePresence>
-                {showOverwriteConfirm && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-                            className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4"
+                    {isLastStep ? (
+                        <div className="flex gap-3">
+                            <button
+                                onClick={startAnalysis}
+                                className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-2"
+                            >
+                                <span>Analyze with AI</span>
+                            </button>
+                            <button
+                                onClick={() => saveDraft(true)}
+                                className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg transition-transform hover:scale-105"
+                            >
+                                Save & Finish
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={handleNext}
+                            className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-md transition-transform hover:scale-105"
                         >
-                            <h3 className="text-xl font-bold text-destructive">Plan Changed!</h3>
-                            <p className="text-muted-foreground">
-                                You modified your input since the last analysis.
-                            </p>
-                            <div className="flex flex-col gap-3 pt-2">
-                                <button
-                                    onClick={performAnalysis}
-                                    className="w-full py-3 bg-destructive text-destructive-foreground font-bold rounded-xl"
-                                >
-                                    Overwrite & Generate New Report
-                                </button>
-                                <button
-                                    onClick={() => saveDraft(true)}
-                                    className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl"
-                                >
-                                    Save Current & Start New
-                                </button>
-                                <button
-                                    onClick={() => setShowOverwriteConfirm(false)}
-                                    className="w-full py-3 border border-border rounded-xl font-medium hover:bg-accent"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                            Next →
+                        </button>
+                    )}
+                </div>
 
-
-            {/* AI Modal (Large) */}
-            <AnimatePresence>
-                {showModal && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                        onClick={() => setShowModal(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-card border border-border rounded-3xl p-8 max-w-7xl w-full h-[90vh] flex flex-col shadow-2xl"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <h2 className="text-2xl font-bold mb-4 flex justify-between">
-                                <span>AI Analysis Report</span>
-                                <button onClick={() => setShowModal(false)}>✕</button>
-                            </h2>
-
-                            <div className="flex-1 bg-neutral-100 rounded-xl overflow-hidden border border-border">
-                                {isAnalyzing ? (
-                                    <div className="flex flex-col items-center justify-center h-full space-y-4">
-                                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                        <p className="text-muted-foreground animate-pulse">Consulting Expert System...</p>
-                                    </div>
-                                ) : pdfUrl ? (
-                                    <iframe src={pdfUrl} className="w-full h-full" title="PDF Report"></iframe>
-                                ) : (
-                                    <p className="p-8 text-center text-red-500">Failed to generate report.</p>
-                                )}
-                            </div>
-
-                            <div className="mt-6 flex gap-4 justify-end">
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="px-6 py-3 border border-border rounded-xl font-medium hover:bg-accent transition-colors"
-                                >
-                                    Close
-                                </button>
-                                {pdfUrl && (
+                {/* Overwrite Confirmation Modal (Small) */}
+                <AnimatePresence>
+                    {showOverwriteConfirm && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+                                className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4"
+                            >
+                                <h3 className="text-xl font-bold text-destructive">Plan Changed!</h3>
+                                <p className="text-muted-foreground">
+                                    You modified your input since the last analysis.
+                                </p>
+                                <div className="flex flex-col gap-3 pt-2">
                                     <button
-                                        onClick={() => generatePDF(analysisResult || "", true)}
-                                        className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-md hover:scale-105 transition-transform"
+                                        onClick={performAnalysis}
+                                        className="w-full py-3 bg-destructive text-destructive-foreground font-bold rounded-xl"
                                     >
-                                        ⬇️ Download PDF
+                                        Overwrite & Generate New Report
                                     </button>
-                                )}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                                    <button
+                                        onClick={() => saveDraft(true)}
+                                        className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl"
+                                    >
+                                        Save Current & Start New
+                                    </button>
+                                    <button
+                                        onClick={() => setShowOverwriteConfirm(false)}
+                                        className="w-full py-3 border border-border rounded-xl font-medium hover:bg-accent"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
 
+
+                {/* AI Modal (Large) */}
+                <AnimatePresence>
+                    {showModal && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                            onClick={() => setShowModal(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.95, opacity: 0 }}
+                                className="bg-card border border-border rounded-3xl p-8 max-w-7xl w-full h-[90vh] flex flex-col shadow-2xl"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <h2 className="text-2xl font-bold mb-4 flex justify-between">
+                                    <span>AI Analysis Report</span>
+                                    <button onClick={() => setShowModal(false)}>✕</button>
+                                </h2>
+
+                                <div className="flex-1 bg-neutral-100 rounded-xl overflow-hidden border border-border">
+                                    {isAnalyzing ? (
+                                        <div className="flex flex-col items-center justify-center h-full space-y-4">
+                                            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="text-muted-foreground animate-pulse">Consulting Expert System...</p>
+                                        </div>
+                                    ) : pdfUrl ? (
+                                        <iframe src={pdfUrl} className="w-full h-full" title="PDF Report"></iframe>
+                                    ) : (
+                                        <p className="p-8 text-center text-red-500">Failed to generate report.</p>
+                                    )}
+                                </div>
+
+                                <div className="mt-6 flex gap-4 justify-end">
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="px-6 py-3 border border-border rounded-xl font-medium hover:bg-accent transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                    {pdfUrl && (
+                                        <button
+                                            onClick={() => generatePDF(analysisResult || "", true)}
+                                            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-md hover:scale-105 transition-transform"
+                                        >
+                                            ⬇️ Download PDF
+                                        </button>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+            </div>
         </div>
     )
 }
