@@ -36,3 +36,21 @@ document.addEventListener("DOMContentLoaded", () => {
     themeToggle.addEventListener("click", toggleTheme)
   }
 })
+
+// Navigation Tracking for Animation
+document.addEventListener('DOMContentLoaded', () => {
+  // Select all links navigating to home
+  const homeLinks = document.querySelectorAll('a[href="index.html"], a[href="./index.html"]');
+
+  homeLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      // Only if we are NOT currently on index.html (optional, but good practice)
+      // Actually, we want it even if we are on index.html and clicking home again?
+      // The requirement says "not when we click another page... and then click home again"
+      // Wait, "not when we click another page... and then click home again" means:
+      // IF we go simulator -> home, do NOT play animation.
+      // So we DO want to set the flag when clicking these links.
+      sessionStorage.setItem('skipIntro', 'true');
+    });
+  });
+});

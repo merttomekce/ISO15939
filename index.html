@@ -26,6 +26,21 @@
 </head>
 
 <body class="bg-background text-foreground transition-colors duration-300">
+    <!-- Startup Overlay -->
+    <div id="startup-overlay">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-16 h-16 border-4 border-current border-t-transparent rounded-full animate-spin"></div>
+            <div>Iso 15939</div>
+        </div>
+    </div>
+    <script>
+        // Flicker prevention
+        if (sessionStorage.getItem('skipIntro') === 'true') {
+            document.getElementById('startup-overlay').style.display = 'none';
+        }
+    </script>
+    <script src="animations.js"></script>
+
     <!-- Header -->
     <header
         class="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -64,7 +79,7 @@
     <section class="relative overflow-hidden py-20 md:py-32">
         <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background"></div>
         <div class="container mx-auto px-4 relative z-10">
-            <div class="max-w-3xl mx-auto text-center space-y-6 fade-in">
+            <div class="max-w-3xl mx-auto text-center space-y-6 fade-in hero-content">
                 <h1 class="text-4xl md:text-6xl font-bold tracking-tight">
                     Software Quality
                     <span class="text-primary">Assessment</span>
