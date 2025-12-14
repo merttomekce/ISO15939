@@ -5,7 +5,6 @@ import { useEffect, useState } from "react"
 
 export function StartupAnimation({ onComplete }: { onComplete: () => void }) {
     const [show, setShow] = useState(true)
-    const [phase, setPhase] = useState(0) // 0: Start, 1: Text, 2: Exit
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
@@ -13,18 +12,18 @@ export function StartupAnimation({ onComplete }: { onComplete: () => void }) {
 
         // Sequence
         // 0s: Start
-        // 0.5s: Measure
-        // 1.5s: Analyze
-        // 2.5s: Improve
-        // 4.0s: Exit start
+        // 3.5s: Exit start (Curtain goes up)
+        // 4.3s: Unmount (Animation finished)
 
         const timers: NodeJS.Timeout[] = []
 
-        timers.push(setTimeout(() => setPhase(1), 500))
-        timers.push(setTimeout(() => setPhase(2), 3500))
+        // Start Exit Animation (Curtain Up)
         timers.push(setTimeout(() => {
             setShow(false)
-            // sessionStorage.setItem("skipIntro", "true") // Uncomment to persist skip
+        }, 3500))
+
+        // Call onComplete after animation finishes
+        timers.push(setTimeout(() => {
             onComplete()
         }, 4300)) // 3500 + 800ms exit transition
 

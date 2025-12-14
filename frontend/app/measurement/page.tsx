@@ -13,6 +13,41 @@ const FIELDS = [
 
 
 
+// Sub-components for consistent UI
+function CustomInput({ label, description, value, onChange, placeholder, autoFocus }: any) {
+    return (
+        <div className="space-y-4">
+            <h3 className="text-2xl font-bold">{label}</h3>
+            <p className="text-muted-foreground">{description}</p>
+            <input
+                type="text"
+                autoFocus={autoFocus}
+                className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-primary outline-none transition-all"
+                placeholder={placeholder}
+                value={value || ''}
+                onChange={e => onChange(e.target.value)}
+            />
+        </div>
+    )
+}
+
+function CustomTextArea({ label, description, value, onChange, placeholder, autoFocus }: any) {
+    return (
+        <div className="space-y-4">
+            <h3 className="text-2xl font-bold">{label}</h3>
+            <p className="text-muted-foreground">{description}</p>
+            <textarea
+                autoFocus={autoFocus}
+                className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
+                rows={5}
+                placeholder={placeholder}
+                value={value || ''}
+                onChange={e => onChange(e.target.value)}
+            />
+        </div>
+    )
+}
+
 function MeasurementContent() {
     const { token } = useAuth()
     const router = useRouter()
@@ -20,20 +55,17 @@ function MeasurementContent() {
     const id = searchParams.get('id')
 
     const [formData, setFormData] = useState<Record<string, string>>({});
+    const [currentStep, setCurrentStep] = useState(0);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [saveMessage, setSaveMessage] = useState("");
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
 
+    // Initial Load
     useEffect(() => {
         const headers: Record<string, string> = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token} `;
-        }
+        if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        // If ID is provided, fetch specific measurement. Otherwise fetch latest draft.
-        const endpoint = id ? `/ api / measurements / ${id} ` : '/api/measurements/latest';
+        const endpoint = id ? `/api/measurements/${id}` : '/api/measurements/latest';
 
         fetch(endpoint, { headers })
             .then(res => res.ok ? res.json() : null)
@@ -41,81 +73,188 @@ function MeasurementContent() {
                 if (data && Object.keys(data).length > 0) setFormData(data);
             })
             .catch(() => { });
-    }, [token, id])
+    }, [token, id]);
 
     const handleChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
     const saveDraft = async (redirect = false) => {
-        setIsSaving(true);
-        setSaveMessage("");
-
         try {
             const res = await fetch("/api/measurements/save", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": `Bearer ${token} ` } : {})
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
                 },
                 body: JSON.stringify(formData)
             });
 
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error || "Save failed");
-            }
-
-            setSaveMessage("Draft saved successfully!");
-            setTimeout(() => setSaveMessage(""), 3000);
-
+            if (!res.ok) throw new Error("Save failed");
             if (redirect) router.push('/dashboard');
-
         } catch (e: any) {
-            alert(`Failed to save: ${e.message} `);
-        } finally {
-            setIsSaving(false);
+            alert(`Failed to save: ${e.message}`);
         }
     }
 
-    const handleComplete = () => {
-        if (confirm("Complete measurement and return to dashboard?")) {
-            saveDraft(true);
+    const steps = [
+        {
+            title: "Information Need",
+            component: (
+                <CustomTextArea
+                    label="Information Need"
+                    description="What information do you need to make decisions? Be specific about the goal."
+                    placeholder="e.g. We need to evaluate if the codebase stability is improving over time..."
+                    value={formData.infoNeed}
+                    onChange={(v: string) => handleChange('infoNeed', v)}
+                    autoFocus
+                />
+            )
+        },
+        {
+            title: "Measurable Concept",
+            component: (
+                <CustomInput
+                    label="Measurable Concept"
+                    description="What abstract concept are you trying to quantify?"
+                    placeholder="e.g. Code Stability, User Satisfaction, Performance..."
+                    value={formData.measurableConcept}
+                    onChange={(v: string) => handleChange('measurableConcept', v)}
+                    autoFocus
+                />
+            )
+        },
+        {
+            title: "Entity & Attribute",
+            component: (
+                <div className="space-y-6">
+                    <div className="space-y-4">
+                        <h3 className="text-2xl font-bold">Entity & Attribute</h3>
+                        <p className="text-muted-foreground">Define the specific object and the property you are measuring.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Entity</label>
+                            <input
+                                type="text"
+                                autoFocus
+                                className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-primary outline-none transition-all"
+                                placeholder="e.g. Source Code Module"
+                                value={formData.entity || ''}
+                                onChange={e => handleChange('entity', e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Attribute</label>
+                            <input
+                                type="text"
+                                className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-primary outline-none transition-all"
+                                placeholder="e.g. Complexity / Lines"
+                                value={formData.attribute || ''}
+                                onChange={e => handleChange('attribute', e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: "Base Measure",
+            component: (
+                <CustomTextArea
+                    label="Base Measure"
+                    description="How exactly will you collect the raw data? Describe the counting rule."
+                    placeholder="e.g. Count the number of lines in each file ending with .ts, excluding comments..."
+                    value={formData.baseMeasure}
+                    onChange={(v: string) => handleChange('baseMeasure', v)}
+                    autoFocus
+                />
+            )
+        },
+        {
+            title: "Derived Measure",
+            component: (
+                <CustomInput
+                    label="Derived Measure"
+                    description="How will you combine base measures? (Formula)"
+                    placeholder="e.g. (Defects / KLOC) * 100"
+                    value={formData.derivedMeasure}
+                    onChange={(v: string) => handleChange('derivedMeasure', v)}
+                    autoFocus
+                />
+            )
+        },
+        {
+            title: "Indicator",
+            component: (
+                <CustomTextArea
+                    label="Indicator"
+                    description="How will this be visualized and interpreted?"
+                    placeholder="e.g. A trend line chart showing defect density over the last 6 sprints..."
+                    value={formData.indicator}
+                    onChange={(v: string) => handleChange('indicator', v)}
+                    autoFocus
+                />
+            )
+        },
+        {
+            title: "Summary",
+            component: (
+                <div className="space-y-6">
+                    <h3 className="text-2xl font-bold">Review Your Plan</h3>
+                    <div className="bg-card border border-border rounded-xl p-6 space-y-4 max-h-[50vh] overflow-y-auto">
+                        {Object.keys(formData).map(key => (
+                            <div key={key} className="border-b border-border/50 pb-2 last:border-0">
+                                <span className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+                                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                                </span>
+                                <p className="text-sm font-medium">{formData[key] || "Not specified"}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )
         }
-    }
+    ];
 
+    const currentStepData = steps[currentStep];
+    const isLastStep = currentStep === steps.length - 1;
+
+    const handleNext = () => {
+        if (currentStep < steps.length - 1) {
+            setCurrentStep(prev => prev + 1);
+        }
+    };
+
+    const handleBack = () => {
+        if (currentStep > 0) {
+            setCurrentStep(prev => prev - 1);
+        }
+    };
+
+    // AI Analysis Logic
     const analyzeAI = async () => {
         setIsAnalyzing(true);
         setShowModal(true);
 
         const prompt = `
-            You are an expert Software Quality Assurance Consultant specializing in ISO / IEC 15939 standards.
-            Please analyze the following software measurement definition plan and provide a detailed compliance and quality report.
+            Analyze this ISO 15939 Plan:
+            1. Info Need: ${formData.infoNeed}
+            2. Concept: ${formData.measurableConcept}
+            3. Entity: ${formData.entity}
+            4. Attribute: ${formData.attribute}
+            5. Base Measure: ${formData.baseMeasure}
+            6. Derived Measure: ${formData.derivedMeasure}
+            7. Indicator: ${formData.indicator}
             
-            Measurement Plan Details:
-1. Context / Information Need: ${formData.infoNeed || "Not specified"}
-2. Measurable Concept: ${formData.measurableConcept || "Not specified"}
-3. Entity: ${formData.entity || "Not specified"}
-4. Attribute: ${formData.attribute || "Not specified"}
-5. Base Measure: ${formData.baseMeasure || "Not specified"}
-6. Derived Measure: ${formData.derivedMeasure || "Not specified"}
-7. Indicator: ${formData.indicator || "Not specified"}
-
-            Please provide your analysis in the following Markdown format:
-            ## Analysis Summary
-[Brief summary of the plan's strengths and weaknesses]
-
-            ## ISO 15939 Compliance Check
-    - ** Information Need Alignment:** [Assessment]
-        - ** Measurability:** [Assessment of base / derived measures]
-            - ** Indicator Effectiveness:** [Assessment]
-
+            Provide:
+            ## Analysis
+            [Strengths/Weaknesses]
+            ## Compliance
+            [Check measurability]
             ## Recommendations
-[Specific, actionable improvements]
-            
-            ## Proposed Refinements
-[Better definitions if applicable]
-`;
+            [Improvements]
+        `;
 
         try {
             const res = await fetch('/api/ai/analyze', {
@@ -125,227 +264,84 @@ function MeasurementContent() {
             });
 
             if (!res.ok) throw new Error("AI Service Unavailable");
-
             const result = await res.json();
             const aiText = result.candidates[0].content.parts[0].text;
             setAnalysisResult(aiText);
 
-            // Generate PDF
-            generatePDF(aiText);
-
+            // Simple PDF gen reuse if needed, or just download text
         } catch (e: any) {
-            setAnalysisResult(`Error: ${e.message} `);
+            setAnalysisResult(`Error: ${e.message}`);
         } finally {
             setIsAnalyzing(false);
         }
     }
 
-    const generatePDF = (text: string) => {
-        const doc = new jsPDF();
-        const MARGIN_LEFT = 20;
-        const PAGE_HEIGHT = doc.internal.pageSize.height;
-        let yPos = 30;
-
-        // Header
-        doc.setFillColor(41, 128, 185);
-        doc.rect(0, 0, 210, 15, 'F');
-        doc.setFontSize(22);
-        doc.setTextColor(255, 255, 255);
-        doc.text("AI Quality Analysis Report", 105, 10, { align: "center" });
-
-        doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-
-        // Simple text dump with naive pagination
-        const lines = doc.splitTextToSize(text, 170);
-        lines.forEach((line: string) => {
-            if (yPos > PAGE_HEIGHT - 20) {
-                doc.addPage();
-                yPos = 20;
-            }
-            doc.text(line, MARGIN_LEFT, yPos);
-            yPos += 7;
-        });
-
-        doc.save("ISO15939_AI_Analysis.pdf");
-    }
-
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        show: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1
-            }
-        }
-    }
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        show: { opacity: 1, y: 0 }
-    }
-
     return (
-        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto">
-            <header className="mb-12 text-center space-y-4">
-                <motion.h1
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-4xl md:text-6xl font-black text-foreground"
-                >
-                    ISO 15939 Wizard
-                </motion.h1>
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-xl text-muted-foreground max-w-2xl mx-auto"
-                >
-                    Define your measurement process with precision and clarity.
-                </motion.p>
+        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-4xl mx-auto flex flex-col">
+            <header className="mb-8 text-center space-y-2">
+                <h1 className="text-3xl font-bold">Measurement Wizard</h1>
+                <p className="text-muted-foreground">Step {currentStep + 1} of {steps.length}</p>
+                {/* Progress Bar */}
+                <div className="h-1 bg-accent rounded-full max-w-xs mx-auto overflow-hidden mt-4">
+                    <motion.div
+                        className="h-full bg-primary"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                    />
+                </div>
             </header>
 
-            <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-                {/* Step 1 */}
-                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">1</div>
-                        <h3 className="text-xl font-bold">Information Need</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">What information do you need to make decisions?</p>
-                    <textarea
-                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
-                        rows={4}
-                        placeholder="e.g. We need to know if the project is on track..."
-                        value={formData.infoNeed || ''}
-                        onChange={(e) => handleChange('infoNeed', e.target.value)}
-                    />
-                </motion.div>
+            <main className="flex-1 flex flex-col justify-center min-h-[400px]">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentStep}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-card border border-border rounded-2xl p-8 shadow-lg"
+                    >
+                        {currentStepData.component}
+                    </motion.div>
+                </AnimatePresence>
+            </main>
 
-                {/* Step 2 */}
-                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">2</div>
-                        <h3 className="text-xl font-bold">Measurable Concept</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">What abstract concept needs to be quantified?</p>
-                    <input
-                        type="text"
-                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
-                        placeholder="e.g. Project Progress"
-                        value={formData.measurableConcept || ''}
-                        onChange={(e) => handleChange('measurableConcept', e.target.value)}
-                    />
-                </motion.div>
-
-                {/* Step 3 */}
-                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">3</div>
-                        <h3 className="text-xl font-bold">Entity & Attribute</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">Target object and specific property.</p>
-                    <div className="space-y-3">
-                        <input
-                            type="text"
-                            className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
-                            placeholder="Entity (e.g. Source Code)"
-                            value={formData.entity || ''}
-                            onChange={(e) => handleChange('entity', e.target.value)}
-                        />
-                        <input
-                            type="text"
-                            className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
-                            placeholder="Attribute (e.g. Size)"
-                            value={formData.attribute || ''}
-                            onChange={(e) => handleChange('attribute', e.target.value)}
-                        />
-                    </div>
-                </motion.div>
-
-                {/* Step 4 */}
-                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">4</div>
-                        <h3 className="text-xl font-bold">Base Measure</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">How is the raw data collected?</p>
-                    <textarea
-                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
-                        rows={3}
-                        placeholder="e.g. Count of physical lines of code..."
-                        value={formData.baseMeasure || ''}
-                        onChange={(e) => handleChange('baseMeasure', e.target.value)}
-                    />
-                </motion.div>
-
-                {/* Step 5 */}
-                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">5</div>
-                        <h3 className="text-xl font-bold">Derived Measure</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">Formula or calculation method.</p>
-                    <input
-                        type="text"
-                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
-                        placeholder="e.g. Sum(Lines of Code)"
-                        value={formData.derivedMeasure || ''}
-                        onChange={(e) => handleChange('derivedMeasure', e.target.value)}
-                    />
-                </motion.div>
-
-                {/* Step 6 */}
-                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">6</div>
-                        <h3 className="text-xl font-bold">Indicator</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">Visualization and interpretation.</p>
-                    <textarea
-                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
-                        rows={3}
-                        placeholder="e.g. Bar chart comparing actual vs planned..."
-                        value={formData.indicator || ''}
-                        onChange={(e) => handleChange('indicator', e.target.value)}
-                    />
-                </motion.div>
-            </motion.div>
-
-            {/* Actions */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="mt-12 flex flex-col md:flex-row gap-4 max-w-3xl mx-auto"
-            >
+            {/* Navigation */}
+            <div className="mt-8 flex justify-between gap-4">
                 <button
-                    onClick={() => saveDraft(false)}
-                    disabled={isSaving}
-                    className="flex-1 px-8 py-4 border border-border rounded-xl font-bold text-lg hover:bg-accent transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    onClick={handleBack}
+                    disabled={currentStep === 0}
+                    className="px-6 py-3 rounded-xl font-medium transition-colors hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent"
                 >
-                    {isSaving ? "Saving..." : <span>💾 Save Draft</span>}
+                    ← Back
                 </button>
-                <button
-                    onClick={analyzeAI}
-                    className="flex-1 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2"
-                >
-                    <span>✨ Analyze with AI</span>
-                </button>
-                <button
-                    onClick={handleComplete}
-                    className="flex-1 px-8 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2"
-                >
-                    <span>✅ Complete</span>
-                </button>
-            </motion.div>
 
-            {/* Analysis Modal */}
+                {isLastStep ? (
+                    <div className="flex gap-3">
+                        <button
+                            onClick={analyzeAI}
+                            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg transition-transform hover:scale-105"
+                        >
+                            ✨ Analyze with AI
+                        </button>
+                        <button
+                            onClick={() => saveDraft(true)}
+                            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg transition-transform hover:scale-105"
+                        >
+                            Save & Finish
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={handleNext}
+                        className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-md transition-transform hover:scale-105"
+                    >
+                        Next →
+                    </button>
+                )}
+            </div>
+
+            {/* AI Modal */}
             <AnimatePresence>
                 {showModal && (
                     <motion.div
@@ -353,36 +349,30 @@ function MeasurementContent() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowModal(false)}
                     >
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
+                            initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-card border border-border rounded-3xl p-8 max-w-4xl w-full shadow-2xl max-h-[90vh] flex flex-col"
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-card border border-border rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+                            onClick={e => e.stopPropagation()}
                         >
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-2xl font-bold">AI Analysis Report</h3>
-                                <button onClick={() => setShowModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors">✕</button>
+                            <h2 className="text-2xl font-bold mb-4">AI Analysis Report</h2>
+                            <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
+                                {isAnalyzing ? "Analyzing your plan..." : analysisResult}
                             </div>
-                            <div className="flex-1 overflow-y-auto p-6 border border-border rounded-xl bg-accent/20 whitespace-pre-wrap font-mono text-sm leading-relaxed">
-                                {isAnalyzing ? (
-                                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                        <p className="text-muted-foreground animate-pulse">Consulting Expert System...</p>
-                                    </div>
-                                ) : (
-                                    analysisResult || "No result"
-                                )}
-                            </div>
-                            {!isAnalyzing && analysisResult && (
-                                <div className="mt-4 text-center text-sm text-green-500 font-semibold flex items-center justify-center gap-2">
-                                    <span>📄</span> PDF Report Downloaded
-                                </div>
-                            )}
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="mt-6 w-full py-3 bg-secondary hover:bg-secondary/80 rounded-xl font-medium"
+                            >
+                                Close
+                            </button>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
+
         </div>
     )
 }
