@@ -56,4 +56,21 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// Delete Simulation
+router.delete("/:id", async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const simulation = await Simulation.findOneAndDelete({ _id: req.params.id, userId: decoded.userId });
+
+    if (!simulation) return res.status(404).json({ error: "Simulation not found or unauthorized" });
+    res.json({ message: "Simulation deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

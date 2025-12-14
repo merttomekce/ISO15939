@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Light Mode - Warm Cream & Terracotta (BuiltKindly Inspired) */
+  --background: 40 20% 99%;
+  --foreground: 20 10% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 10% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 10% 15%;
+  --primary: 25 65% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 20% 94%;
+  --secondary-foreground: 20 10% 15%;
+  --muted: 40 20% 94%;
+  --muted-foreground: 25 5% 45%;
+  --accent: 40 30% 96%;
+  --accent-foreground: 20 10% 15%;
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 40 10% 95%;
+  --border: 40 15% 90%;
+  --input: 40 15% 90%;
+  --ring: 25 65% 55%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Dark Mode - Pastel Black & Earth */
+  --background: 240 5% 10%;
+  --foreground: 40 10% 90%;
+  --card: 240 4% 16%;
+  --card-foreground: 40 10% 90%;
+  --popover: 240 5% 10%;
+  --popover-foreground: 40 10% 90%;
+  --primary: 25 60% 65%;
+  --primary-foreground: 240 5% 10%;
+  --secondary: 240 4% 16%;
+  --secondary-foreground: 40 10% 90%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 5% 60%;
+  --accent: 240 4% 20%;
+  --accent-foreground: 40 10% 90%;
+  --destructive: 0 60% 40%;
+  --destructive-foreground: 40 10% 90%;
+  --border: 240 4% 20%;
+  --input: 240 4% 20%;
+  --ring: 25 60% 65%;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-radius: var(--radius);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  /* Smooth Theme Transition for ALL elements */
+  transition: background-color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  transition: background-color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    text-decoration-color 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    fill 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}

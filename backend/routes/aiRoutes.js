@@ -7,8 +7,10 @@ router.post("/analyze", async (req, res) => {
         const { prompt } = req.body;
         const apiKey = process.env.GEMINI_API_KEY;
 
+        console.log("DEBUG: Analyze API Key Check:", apiKey ? "Present" : "Missing");
+
         if (!apiKey || apiKey === "YOUR_API_KEY_HERE") {
-            return res.status(500).json({ error: { message: "Server API Key not configured." } });
+            return res.status(500).json({ error: { message: "Server API Key not configured. Please add GEMINI_API_KEY to backend/.env" } });
         }
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -42,8 +44,11 @@ router.post("/chat", async (req, res) => {
         const { message, context } = req.body;
         const apiKey = process.env.GEMINI_API_KEY;
 
+        console.log("DEBUG: Env Var Keys:", Object.keys(process.env));
+        console.log("DEBUG: API Key Type:", typeof apiKey, "Length:", apiKey ? apiKey.length : 0);
+
         if (!apiKey || apiKey === "YOUR_API_KEY_HERE") {
-            return res.status(500).json({ error: { message: "Server API Key not configured." } });
+            return res.status(500).json({ error: { message: "Server API Key not configured. Please add GEMINI_API_KEY to backend/.env" } });
         }
 
         const systemContext = `

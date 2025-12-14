@@ -1,8 +1,10 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 // Route Imports
@@ -10,8 +12,6 @@ import measurementRoutes from "./routes/measurementRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import simulationRoutes from "./routes/simulationRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

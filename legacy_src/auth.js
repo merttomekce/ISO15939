@@ -73,7 +73,7 @@ const auth = {
 
             // Dropdown Menu
             const dropdown = document.createElement('div');
-            dropdown.className = 'absolute right-0 mt-2 w-48 bg-[#020817] border border-border rounded-lg shadow-lg py-1 hidden z-50';
+            dropdown.className = 'absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg py-1 hidden z-50';
             dropdown.innerHTML = `
                 <div class="px-4 py-2 border-b border-border">
                     <p class="text-sm font-medium text-foreground truncate">${localStorage.getItem('username') || 'User'}</p>
