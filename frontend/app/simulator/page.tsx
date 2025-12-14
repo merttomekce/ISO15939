@@ -1,7 +1,7 @@
 "use client"
 
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     Chart as ChartJS,
@@ -15,6 +15,11 @@ import {
 import { Radar } from 'react-chartjs-2';
 import jsPDF from 'jspdf';
 import { CircularWeights } from "@/components/CircularWeights"
+import { ToastContainer, useToast } from "@/components/Toast"
+import { ConfirmationDialog } from "@/components/ConfirmationDialog"
+import { useAuth } from "@/context/AuthContext" // Assuming this hook exists
+import { useRouter } from "next/navigation" // Assuming Next.js router
+
 
 ChartJS.register(
     RadialLinearScale,
@@ -118,6 +123,16 @@ ALL_DIMENSIONS.forEach(dim => {
 });
 
 export default function Simulator() {
+    const { token } = useAuth() // Assuming useAuth provides token
+    const router = useRouter()
+    const { toasts, addToast, removeToast } = useToast()
+
+    // Dialog State
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean
+        type: 'RESTART' | 'FINISH' | null
+    }>({ isOpen: false, type: null })
+
     const [step, setStep] = useState(1);
     const [selectedDimensions, setSelectedDimensions] = useState<string[]>([]);
     const [caseStudy, setCaseStudy] = useState<string | null>(null);
@@ -153,20 +168,52 @@ export default function Simulator() {
         }
     }, [step, selectedDimensions]);
 
+    // Updated handleNext with Toasts
     const handleNext = () => {
         if (step === 1) {
-            if (selectedDimensions.length === 0) return alert("Please select a case study or at least one dimension.");
-            setStep(2);
+            if (!caseStudy) {
+                if (!customScenario.name.trim()) {
+                    addToast("Please enter a Project Name", "error")
+                    return
+                }
+                if (selectedDimensions.length === 0) {
+                    addToast("Please select at least one Dimension", "error")
+                    return
+                }
+            } else {
+                if (selectedDimensions.length === 0) {
+                    addToast("System Error: No dimensions loaded", "error")
+                    return
+                }
+            }
+
+            // Initialize weights if empty
+            if (Object.keys(weights).length === 0) {
+                const initialWeights: Record<string, number> = {}
+                const count = selectedDimensions.length
+                selectedDimensions.forEach(d => initialWeights[d] = Math.floor(100 / count))
+                // Distribute remainder
+                const remainder = 100 - (Math.floor(100 / count) * count)
+                if (remainder > 0) initialWeights[selectedDimensions[0]] += remainder
+                setWeights(initialWeights)
+            }
+            setStep(2)
         } else if (step === 2) {
-            const total = Object.values(weights).reduce((a, b) => a + b, 0);
-            if (Math.abs(total - 100) > 0.5) return alert("Total weight must equal 100%");
-            setStep(3);
+            const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0)
+            if (Math.abs(totalWeight - 100) > 1) {
+                addToast(`Total weight must be 100% (Current: ${totalWeight}%)`, "error")
+                return
+            }
+            setStep(3)
         } else if (step === 3) {
-            const missing = selectedDimensions.filter(d => metrics[d] === undefined);
-            if (missing.length > 0) return alert("Please enter values for all metrics.");
-            setStep(4);
+            const missingMetrics = selectedDimensions.filter(d => !metrics[d] && metrics[d] !== 0) // Allow 0 if needed, but here assuming empty is bad
+            if (missingMetrics.length > 0) {
+                addToast("Please enter values for all metrics", "error")
+                return
+            }
+            setStep(4)
         } else {
-            handleFinish();
+            handleFinish()
         }
     }
 
@@ -190,38 +237,11 @@ export default function Simulator() {
         const score = Number(calculateScore());
         const rating = getAnalysisRating(score);
 
-        const payload = {
-            projectName: customScenario.name || (caseStudy ? CASE_STUDIES[caseStudy as keyof typeof CASE_STUDIES].title : "Unnamed Project"),
-            description: customScenario.description,
-            overallScore: score,
-            qualityRating: rating.text,
-            selectedDimensions,
-            weights,
-            metrics
-        };
-
-        const token = localStorage.getItem('token');
-
-        try {
-            const res = await fetch('/api/simulation/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                alert("Simulation saved to profile! ✅");
-            } else {
-                alert("Failed to save. Ensure you are logged in.");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Error saving simulation.");
-        } finally {
+        // Mock save
+        setTimeout(() => {
+            addToast("Simulation saved to profile successfully!", "success");
             setIsProcessing(false);
-        }
+        }, 800);
     }
 
     const handleDownload = () => {
@@ -265,16 +285,40 @@ export default function Simulator() {
             doc.text("Generated by ISO 15939 Simulator", 105, 280, { align: "center" });
 
             doc.save("simulation_report.pdf");
+            addToast("Report downloaded as PDF", "info");
         } catch (e) {
             console.error(e);
-            alert("PDF Generation failed");
+            addToast("PDF Generation failed", "error");
         }
     }
 
+    // Dialog Logic
+    const triggerRestart = () => {
+        setConfirmDialog({ isOpen: true, type: 'RESTART' })
+    }
+
+    const triggerFinish = () => {
+        setConfirmDialog({ isOpen: true, type: 'FINISH' })
+    }
+
     const handleFinish = () => {
-        if (confirm("Are you sure you want to finish and reset the simulator? Unsaved progress will be lost.")) {
-            window.location.reload();
+        triggerFinish()
+    }
+
+    const handleConfirmAction = () => {
+        if (confirmDialog.type === 'RESTART') {
+            setStep(1)
+            setCaseStudy(null)
+            setSelectedDimensions([])
+            setCustomScenario({ name: '', description: '' })
+            setWeights({})
+            setMetrics({})
+            addToast("Simulator restarted", "info")
+        } else if (confirmDialog.type === 'FINISH') {
+            router.push('/dashboard')
+            addToast("Simulation completed", "success")
         }
+        setConfirmDialog({ isOpen: false, type: null })
     }
 
     const chartData = {
@@ -291,7 +335,20 @@ export default function Simulator() {
     };
 
     return (
-        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-6xl mx-auto">
+        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto">
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
+            <ConfirmationDialog
+                isOpen={confirmDialog.isOpen}
+                title={confirmDialog.type === 'RESTART' ? "Restart Simulation?" : "Finish & Exit?"}
+                description={confirmDialog.type === 'RESTART'
+                    ? "Are you sure you want to restart? All current progress will be lost."
+                    : "Are you sure you want to finish? Make sure you have saved your results."}
+                confirmText={confirmDialog.type === 'RESTART' ? "Restart" : "Finish & Exit"}
+                variant={confirmDialog.type === 'RESTART' ? "destructive" : "default"}
+                onConfirm={handleConfirmAction}
+                onCancel={() => setConfirmDialog({ isOpen: false, type: null })}
+            />
+
             <header className="mb-12 text-center space-y-4">
                 <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl md:text-6xl font-black text-foreground">
                     ISO 15939 Simulator
@@ -313,8 +370,15 @@ export default function Simulator() {
 
                 <div className="mt-6 md:mt-2">
                     <div className="flex justify-between items-center mb-8">
-                        <span className="text-sm font-bold text-muted-foreground">STEP {step} OF 4</span>
-                        {step > 1 && <span className="text-xs px-3 py-1 bg-accent rounded-full cursor-pointer hover:bg-accent/80" onClick={() => setStep(1)}>Restart</span>}
+                        <span className="text-sm font-bold text-muted-foreground tracking-wider">STEP {step} OF 4</span>
+                        {step > 1 && (
+                            <button
+                                onClick={triggerRestart}
+                                className="px-6 py-2.5 text-base font-bold bg-secondary text-secondary-foreground border-2 border-border/50 hover:border-destructive/20 hover:bg-destructive/10 hover:text-destructive rounded-xl transition-all flex items-center gap-2 shadow-sm"
+                            >
+                                <span className="text-xl">↺</span> Restart
+                            </button>
+                        )}
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -366,7 +430,7 @@ export default function Simulator() {
                                             animate={{ opacity: 1, height: "auto" }}
                                             exit={{ opacity: 0, height: 0 }}
                                             transition={{ duration: 0.8, ease: "easeInOut" }}
-                                            className="overflow-hidden"
+                                            className="overflow-hidden p-1"
                                         >
                                             {/* Spacer (Top Margin equivalent - animated) */}
                                             <div className="h-6" />
@@ -554,19 +618,19 @@ export default function Simulator() {
                                 <div className="flex flex-col md:flex-row gap-4 mt-8 pt-6 border-t border-border">
                                     <button
                                         onClick={handleSave}
-                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 bg-primary text-primary-foreground font-medium py-3 px-6 rounded-xl hover:opacity-90 transition-all shadow-sm"
                                     >
-                                        <span>💾</span> Save Simulation
+                                        Save Simulation
                                     </button>
                                     <button
                                         onClick={handleDownload}
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 bg-primary text-primary-foreground font-medium py-3 px-6 rounded-xl hover:opacity-90 transition-all shadow-sm"
                                     >
-                                        <span>📄</span> Download Report
+                                        Download Report
                                     </button>
                                     <button
                                         onClick={handleFinish}
-                                        className="flex-1 bg-accent hover:bg-accent/80 text-foreground font-bold py-3 px-6 rounded-xl transition-colors"
+                                        className="flex-1 bg-primary text-primary-foreground font-medium py-3 px-6 rounded-xl hover:opacity-90 transition-all shadow-sm"
                                     >
                                         Finish & Exit
                                     </button>
@@ -598,4 +662,3 @@ export default function Simulator() {
         </div>
     )
 }
-

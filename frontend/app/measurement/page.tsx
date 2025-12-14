@@ -4,6 +4,7 @@
 import { useAuth } from "@/context/AuthContext"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import jsPDF from 'jspdf';
 
 const FIELDS = [
@@ -169,109 +170,219 @@ function MeasurementContent() {
         doc.save("ISO15939_AI_Analysis.pdf");
     }
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    }
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+    }
+
     return (
-        <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto">
+            <header className="mb-12 text-center space-y-4">
+                <motion.h1
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-4xl md:text-6xl font-black text-foreground"
+                >
+                    ISO 15939 Wizard
+                </motion.h1>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-xl text-muted-foreground max-w-2xl mx-auto"
+                >
+                    Define your measurement process with precision and clarity.
+                </motion.p>
+            </header>
 
-            <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold mb-4">ISO 15939 Measurement Wizard</h1>
-                    <p className="text-muted-foreground">Follow the 6-step process to define and implement software measurements</p>
-                </div>
-
-                <div className="bg-card border border-border rounded-lg p-8 space-y-8">
-                    {/* Steps */}
-                    <div className="border-l-4 border-primary pl-6">
-                        <h3 className="text-xl font-semibold mb-2">Step 1: Information Need</h3>
-                        <p className="text-muted-foreground mb-4">What information do you need to make decisions?</p>
-                        <textarea
-                            className="w-full p-3 border border-border rounded-lg bg-background" rows={3}
-                            placeholder="Example: We need to know if our application meets user expectations..."
-                            value={formData.infoNeed || ''}
-                            onChange={(e) => handleChange('infoNeed', e.target.value)}
-                        />
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+                {/* Step 1 */}
+                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">1</div>
+                        <h3 className="text-xl font-bold">Information Need</h3>
                     </div>
+                    <p className="text-sm text-muted-foreground mb-4">What information do you need to make decisions?</p>
+                    <textarea
+                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
+                        rows={4}
+                        placeholder="e.g. We need to know if the project is on track..."
+                        value={formData.infoNeed || ''}
+                        onChange={(e) => handleChange('infoNeed', e.target.value)}
+                    />
+                </motion.div>
 
-                    <div className="border-l-4 border-border pl-6">
-                        <h3 className="text-xl font-semibold mb-2">Step 2: Measurable Concept</h3>
-                        <p className="text-muted-foreground mb-4">What abstract concept needs to be quantified?</p>
+                {/* Step 2 */}
+                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">2</div>
+                        <h3 className="text-xl font-bold">Measurable Concept</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">What abstract concept needs to be quantified?</p>
+                    <input
+                        type="text"
+                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
+                        placeholder="e.g. Project Progress"
+                        value={formData.measurableConcept || ''}
+                        onChange={(e) => handleChange('measurableConcept', e.target.value)}
+                    />
+                </motion.div>
+
+                {/* Step 3 */}
+                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">3</div>
+                        <h3 className="text-xl font-bold">Entity & Attribute</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">Target object and specific property.</p>
+                    <div className="space-y-3">
                         <input
                             type="text"
-                            className="w-full p-3 border border-border rounded-lg bg-background"
-                            placeholder="Example: Performance Efficiency"
-                            value={formData.measurableConcept || ''}
-                            onChange={(e) => handleChange('measurableConcept', e.target.value)}
+                            className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
+                            placeholder="Entity (e.g. Source Code)"
+                            value={formData.entity || ''}
+                            onChange={(e) => handleChange('entity', e.target.value)}
+                        />
+                        <input
+                            type="text"
+                            className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
+                            placeholder="Attribute (e.g. Size)"
+                            value={formData.attribute || ''}
+                            onChange={(e) => handleChange('attribute', e.target.value)}
                         />
                     </div>
-                    {/* Simplified repeating blocks for brevity, could be componentized */}
-                    <div className="border-l-4 border-border pl-6">
-                        <h3 className="text-xl font-semibold mb-2">Step 3: Entity & Attributes</h3>
-                        <div className="space-y-2">
-                            <input type="text" className="w-full p-3 border border-border rounded-lg bg-background" placeholder="Entity: Web Application" value={formData.entity || ''} onChange={(e) => handleChange('entity', e.target.value)} />
-                            <input type="text" className="w-full p-3 border border-border rounded-lg bg-background" placeholder="Attribute: Response Time" value={formData.attribute || ''} onChange={(e) => handleChange('attribute', e.target.value)} />
-                        </div>
-                    </div>
+                </motion.div>
 
-                    <div className="border-l-4 border-border pl-6">
-                        <h3 className="text-xl font-semibold mb-2">Step 4: Base Measure</h3>
-                        <textarea className="w-full p-3 border border-border rounded-lg bg-background" rows={2} placeholder="Collect raw data..." value={formData.baseMeasure || ''} onChange={(e) => handleChange('baseMeasure', e.target.value)} />
+                {/* Step 4 */}
+                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">4</div>
+                        <h3 className="text-xl font-bold">Base Measure</h3>
                     </div>
+                    <p className="text-sm text-muted-foreground mb-4">How is the raw data collected?</p>
+                    <textarea
+                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
+                        rows={3}
+                        placeholder="e.g. Count of physical lines of code..."
+                        value={formData.baseMeasure || ''}
+                        onChange={(e) => handleChange('baseMeasure', e.target.value)}
+                    />
+                </motion.div>
 
-                    <div className="border-l-4 border-border pl-6">
-                        <h3 className="text-xl font-semibold mb-2">Step 5: Derived Measure</h3>
-                        <input type="text" className="w-full p-3 border border-border rounded-lg bg-background" placeholder="Formula..." value={formData.derivedMeasure || ''} onChange={(e) => handleChange('derivedMeasure', e.target.value)} />
+                {/* Step 5 */}
+                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">5</div>
+                        <h3 className="text-xl font-bold">Derived Measure</h3>
                     </div>
+                    <p className="text-sm text-muted-foreground mb-4">Formula or calculation method.</p>
+                    <input
+                        type="text"
+                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all"
+                        placeholder="e.g. Sum(Lines of Code)"
+                        value={formData.derivedMeasure || ''}
+                        onChange={(e) => handleChange('derivedMeasure', e.target.value)}
+                    />
+                </motion.div>
 
-                    <div className="border-l-4 border-border pl-6">
-                        <h3 className="text-xl font-semibold mb-2">Step 6: Indicator</h3>
-                        <textarea className="w-full p-3 border border-border rounded-lg bg-background" rows={2} placeholder="Interpretation logic..." value={formData.indicator || ''} onChange={(e) => handleChange('indicator', e.target.value)} />
+                {/* Step 6 */}
+                <motion.div variants={itemVariants} className="bg-card border border-border rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">6</div>
+                        <h3 className="text-xl font-bold">Indicator</h3>
                     </div>
+                    <p className="text-sm text-muted-foreground mb-4">Visualization and interpretation.</p>
+                    <textarea
+                        className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
+                        rows={3}
+                        placeholder="e.g. Bar chart comparing actual vs planned..."
+                        value={formData.indicator || ''}
+                        onChange={(e) => handleChange('indicator', e.target.value)}
+                    />
+                </motion.div>
+            </motion.div>
 
-                    {/* Actions */}
-                    <div className="flex gap-4 pt-4">
-                        <button
-                            onClick={() => saveDraft(false)}
-                            disabled={isSaving}
-                            className="flex-1 px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition-colors disabled:opacity-50"
-                        >
-                            {isSaving ? "Saving..." : saveMessage || "Save Draft"}
-                        </button>
-                        <button onClick={analyzeAI} className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                            Analyze with AI
-                        </button>
-                        <button
-                            onClick={handleComplete}
-                            className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
-                        >
-                            Complete
-                        </button>
-                    </div>
-                </div>
+            {/* Actions */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="mt-12 flex flex-col md:flex-row gap-4 max-w-3xl mx-auto"
+            >
+                <button
+                    onClick={() => saveDraft(false)}
+                    disabled={isSaving}
+                    className="flex-1 px-8 py-4 border border-border rounded-xl font-bold text-lg hover:bg-accent transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                    {isSaving ? "Saving..." : <span>💾 Save Draft</span>}
+                </button>
+                <button
+                    onClick={analyzeAI}
+                    className="flex-1 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2"
+                >
+                    <span>✨ Analyze with AI</span>
+                </button>
+                <button
+                    onClick={handleComplete}
+                    className="flex-1 px-8 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2"
+                >
+                    <span>✅ Complete</span>
+                </button>
+            </motion.div>
 
-                {/* Analysis Modal */}
+            {/* Analysis Modal */}
+            <AnimatePresence>
                 {showModal && (
-                    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-                        <div className="bg-card border border-border rounded-lg p-6 max-w-4xl w-full mx-4 shadow-lg max-h-[90vh] flex flex-col">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-xl font-bold">AI Analysis Report</h3>
-                                <button onClick={() => setShowModal(false)} className="text-muted-foreground hover:text-foreground">Close</button>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-card border border-border rounded-3xl p-8 max-w-4xl w-full shadow-2xl max-h-[90vh] flex flex-col"
+                        >
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-2xl font-bold">AI Analysis Report</h3>
+                                <button onClick={() => setShowModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors">✕</button>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 border border-border rounded bg-background/50 whitespace-pre-wrap">
+                            <div className="flex-1 overflow-y-auto p-6 border border-border rounded-xl bg-accent/20 whitespace-pre-wrap font-mono text-sm leading-relaxed">
                                 {isAnalyzing ? (
-                                    <div className="flex flex-col items-center justify-center h-64">
-                                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                                        <p>Analyzing...</p>
+                                    <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-muted-foreground animate-pulse">Consulting Expert System...</p>
                                     </div>
                                 ) : (
                                     analysisResult || "No result"
                                 )}
                             </div>
                             {!isAnalyzing && analysisResult && (
-                                <div className="mt-4 text-center text-sm text-green-600">PDF Downloaded automatically!</div>
+                                <div className="mt-4 text-center text-sm text-green-500 font-semibold flex items-center justify-center gap-2">
+                                    <span>📄</span> PDF Report Downloaded
+                                </div>
                             )}
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 )}
-            </main>
+            </AnimatePresence>
         </div>
     )
 }

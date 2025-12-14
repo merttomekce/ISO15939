@@ -1,13 +1,16 @@
 "use client"
 
 
-import { StartupAnimation } from "@/components/StartupAnimation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    setIsLoaded(true)
+  }, [])
 
   const container = {
     hidden: { opacity: 0 },
@@ -31,7 +34,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
-      <StartupAnimation onComplete={() => setIsLoaded(true)} />
+
 
 
 

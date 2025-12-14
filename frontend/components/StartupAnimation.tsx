@@ -10,13 +10,6 @@ export function StartupAnimation({ onComplete }: { onComplete: () => void }) {
 
     useEffect(() => {
         setIsMounted(true)
-        const skip = sessionStorage.getItem("skipIntro") === "true"
-
-        if (skip) {
-            setShow(false)
-            onComplete()
-            return
-        }
 
         // Sequence
         // 0s: Start
