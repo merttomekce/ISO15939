@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
 
 import { ThemeProvider } from "./providers";
 import { AuthProvider } from "@/context/AuthContext";
+import { Header } from "@/components/Header";
+import PageTransition from "@/components/PageTransition";
 
 export const metadata: Metadata = {
   title: "ISO 15939 Quality Assessment",
@@ -37,7 +39,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <Header />
+            <PageTransition>
+              {children}
+            </PageTransition>
           </ThemeProvider>
         </AuthProvider>
       </body>

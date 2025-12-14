@@ -1,6 +1,6 @@
 "use client"
 
-import { Header } from "@/components/Header"
+
 import { motion } from "framer-motion"
 
 export default function References() {
@@ -21,7 +21,7 @@ export default function References() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
-            <Header />
+
 
             <main className="flex-1">
                 {/* Hero Section */}

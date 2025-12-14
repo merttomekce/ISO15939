@@ -1,52 +1,85 @@
 "use client"
 
-import { Header } from "@/components/Header"
-import { useState, useEffect } from "react"
+
+import { useAuth } from "@/context/AuthContext"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useState, useEffect } from "react"
 import jsPDF from 'jspdf';
 
 const FIELDS = [
     "infoNeed", "measurableConcept", "entity", "attribute", "baseMeasure", "derivedMeasure", "indicator"
 ]
 
-export default function Measurement() {
+
+
+function MeasurementContent() {
+    const { token } = useAuth()
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const id = searchParams.get('id')
+
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState("");
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
-        // Load latest data on mount
-        fetch('/api/measurements/latest')
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token} `;
+        }
+
+        // If ID is provided, fetch specific measurement. Otherwise fetch latest draft.
+        const endpoint = id ? `/ api / measurements / ${id} ` : '/api/measurements/latest';
+
+        fetch(endpoint, { headers })
             .then(res => res.ok ? res.json() : null)
             .then(data => {
                 if (data && Object.keys(data).length > 0) setFormData(data);
             })
             .catch(() => { });
-    }, [])
+    }, [token, id])
 
     const handleChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
-    const saveDraft = async () => {
-        const btn = document.getElementById("saveDraftBtn") as HTMLButtonElement
-        if (btn) { btn.disabled = true; btn.innerText = "Saving..." }
+    const saveDraft = async (redirect = false) => {
+        setIsSaving(true);
+        setSaveMessage("");
 
         try {
-            const token = localStorage.getItem('token');
-            await fetch("/api/measurements/save", {
+            const res = await fetch("/api/measurements/save", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                    ...(token ? { "Authorization": `Bearer ${token} ` } : {})
                 },
                 body: JSON.stringify(formData)
             });
-            if (btn) btn.innerText = "Saved!"
-        } catch (e) {
-            if (btn) btn.innerText = "Error"
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || "Save failed");
+            }
+
+            setSaveMessage("Draft saved successfully!");
+            setTimeout(() => setSaveMessage(""), 3000);
+
+            if (redirect) router.push('/dashboard');
+
+        } catch (e: any) {
+            alert(`Failed to save: ${e.message} `);
         } finally {
-            setTimeout(() => { if (btn) { btn.disabled = false; btn.innerText = "Save Draft" } }, 2000)
+            setIsSaving(false);
+        }
+    }
+
+    const handleComplete = () => {
+        if (confirm("Complete measurement and return to dashboard?")) {
+            saveDraft(true);
         }
     }
 
@@ -55,33 +88,33 @@ export default function Measurement() {
         setShowModal(true);
 
         const prompt = `
-            You are an expert Software Quality Assurance Consultant specializing in ISO/IEC 15939 standards.
+            You are an expert Software Quality Assurance Consultant specializing in ISO / IEC 15939 standards.
             Please analyze the following software measurement definition plan and provide a detailed compliance and quality report.
             
             Measurement Plan Details:
-            1. Context/Information Need: ${formData.infoNeed || "Not specified"}
-            2. Measurable Concept: ${formData.measurableConcept || "Not specified"}
-            3. Entity: ${formData.entity || "Not specified"}
-            4. Attribute: ${formData.attribute || "Not specified"}
-            5. Base Measure: ${formData.baseMeasure || "Not specified"}
-            6. Derived Measure: ${formData.derivedMeasure || "Not specified"}
-            7. Indicator: ${formData.indicator || "Not specified"}
+1. Context / Information Need: ${formData.infoNeed || "Not specified"}
+2. Measurable Concept: ${formData.measurableConcept || "Not specified"}
+3. Entity: ${formData.entity || "Not specified"}
+4. Attribute: ${formData.attribute || "Not specified"}
+5. Base Measure: ${formData.baseMeasure || "Not specified"}
+6. Derived Measure: ${formData.derivedMeasure || "Not specified"}
+7. Indicator: ${formData.indicator || "Not specified"}
 
             Please provide your analysis in the following Markdown format:
             ## Analysis Summary
-            [Brief summary of the plan's strengths and weaknesses]
+[Brief summary of the plan's strengths and weaknesses]
 
             ## ISO 15939 Compliance Check
-            - **Information Need Alignment:** [Assessment]
-            - **Measurability:** [Assessment of base/derived measures]
-            - **Indicator Effectiveness:** [Assessment]
+    - ** Information Need Alignment:** [Assessment]
+        - ** Measurability:** [Assessment of base / derived measures]
+            - ** Indicator Effectiveness:** [Assessment]
 
             ## Recommendations
-            [Specific, actionable improvements]
+[Specific, actionable improvements]
             
             ## Proposed Refinements
-            [Better definitions if applicable]
-        `;
+[Better definitions if applicable]
+`;
 
         try {
             const res = await fetch('/api/ai/analyze', {
@@ -100,7 +133,7 @@ export default function Measurement() {
             generatePDF(aiText);
 
         } catch (e: any) {
-            setAnalysisResult(`Error: ${e.message}`);
+            setAnalysisResult(`Error: ${e.message} `);
         } finally {
             setIsAnalyzing(false);
         }
@@ -138,7 +171,7 @@ export default function Measurement() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
-            <Header />
+
             <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold mb-4">ISO 15939 Measurement Wizard</h1>
@@ -195,11 +228,22 @@ export default function Measurement() {
 
                     {/* Actions */}
                     <div className="flex gap-4 pt-4">
-                        <button id="saveDraftBtn" onClick={saveDraft} className="flex-1 px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition-colors">Save Draft</button>
+                        <button
+                            onClick={() => saveDraft(false)}
+                            disabled={isSaving}
+                            className="flex-1 px-6 py-3 border border-border rounded-lg font-medium hover:bg-accent transition-colors disabled:opacity-50"
+                        >
+                            {isSaving ? "Saving..." : saveMessage || "Save Draft"}
+                        </button>
                         <button onClick={analyzeAI} className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
                             Analyze with AI
                         </button>
-                        <button className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity">Complete</button>
+                        <button
+                            onClick={handleComplete}
+                            className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
+                        >
+                            Complete
+                        </button>
                     </div>
                 </div>
 
@@ -229,5 +273,13 @@ export default function Measurement() {
                 )}
             </main>
         </div>
+    )
+}
+
+export default function Measurement() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
+            <MeasurementContent />
+        </Suspense>
     )
 }

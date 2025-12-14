@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Header } from "@/components/Header"
+
 
 export default function Register() {
     const [username, setUsername] = useState("")
@@ -53,7 +53,7 @@ export default function Register() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
-            <Header />
+
             <main className="flex-1 flex items-center justify-center p-4">
                 <div className="w-full max-w-md bg-card border border-border rounded-lg p-8 shadow-lg">
                     <h1 className="text-2xl font-bold mb-6 text-center">Create Account</h1>

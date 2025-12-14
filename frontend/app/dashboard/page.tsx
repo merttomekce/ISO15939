@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@/context/AuthContext"
-import { Header } from "@/components/Header"
+
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
@@ -45,7 +45,7 @@ export default function Dashboard() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
-            <Header />
+
             <main className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold mb-2">Welcome, {user}</h1>
                 <p className="text-muted-foreground mb-8">View your saved measurements and simulation history.</p>
@@ -75,7 +75,12 @@ export default function Dashboard() {
                                             I will link to /measurement but populating it might be tricky without a dedicated ID loader. 
                                             For now, just showing the list is mostly what's needed, or a simple disabled button.
                                         */}
-                                                <button disabled className="text-xs px-2 py-1 bg-primary/50 text-primary-foreground rounded cursor-not-allowed">View</button>
+                                                <Link
+                                                    href={`/measurement?id=${m._id}`}
+                                                    className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:opacity-90 transition-opacity"
+                                                >
+                                                    View
+                                                </Link>
                                             </div>
                                         </div>
                                     ))

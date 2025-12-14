@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import Measurement from "../models/Measurement.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_do_not_use_in_production";
 
@@ -31,14 +32,9 @@ router.post("/save", async (req, res) => {
 });
 
 // Get History (Protected)
-router.get("/history", async (req, res) => {
+router.get("/history", authMiddleware, async (req, res) => {
   try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const measurements = await Measurement.find({ userId: decoded.userId }).sort({ createdAt: -1 });
+    const measurements = await Measurement.find({ userId: req.user.userId }).sort({ createdAt: -1 });
     res.json(measurements);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -56,10 +52,31 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Bring the last record
+// Bring the last record (User specific)
 router.get("/latest", async (req, res) => {
   try {
-    const latest = await Measurement.findOne().sort({ createdAt: -1 });
+    let query = {};
+    const authHeader = req.headers['authorization'];
+
+    if (authHeader) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+        query = { userId: decoded.userId };
+      } catch (e) {
+        // If token invalid, maybe return nothing or guest data? 
+        // For now, let's assume guest data has no userId or specific logic.
+        // But safer to just fail gracefully or return empty for now if invalid token.
+        return res.status(200).json({});
+      }
+    } else {
+      // Guest: maybe we shouldn't return anything for privacy, 
+      // or return the latest guest draft? 
+      // Let's return latest guest draft (userId is null/undefined)
+      query = { userId: null };
+    }
+
+    const latest = await Measurement.findOne(query).sort({ createdAt: -1 });
     res.status(200).json(latest || {});
   } catch (err) {
     res.status(500).json({ error: err.message });

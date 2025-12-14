@@ -1,6 +1,6 @@
 "use client"
 
-import { Header } from "@/components/Header"
+
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -190,7 +190,7 @@ export default function Simulator() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
-            <Header />
+
             <main className="flex-1 container mx-auto px-4 py-8 max-w-5xl">
                 {/* Progress Bar */}
                 <div className="mb-12">

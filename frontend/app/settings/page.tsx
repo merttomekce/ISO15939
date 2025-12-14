@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@/context/AuthContext"
-import { Header } from "@/components/Header"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -62,7 +62,7 @@ export default function Settings() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background text-foreground">
-            <Header />
+
             <main className="container mx-auto px-4 py-8 max-w-2xl">
                 <h1 className="text-3xl font-bold mb-8">Settings</h1>
 

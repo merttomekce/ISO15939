@@ -1,6 +1,6 @@
 "use client"
 
-import { Header } from "@/components/Header"
+
 import { StartupAnimation } from "@/components/StartupAnimation"
 import { useState } from "react"
 import { motion } from "framer-motion"
@@ -33,7 +33,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
       <StartupAnimation onComplete={() => setIsLoaded(true)} />
 
-      <Header />
+
 
       <main className="flex-1">
         {/* Hero Section */}
