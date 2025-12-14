@@ -13,6 +13,7 @@ const measurementSchema = new mongoose.Schema({
   baseMeasure: { type: String, default: "" },
   derivedMeasure: { type: String, default: "" },
   indicator: { type: String, default: "" },
+  aiAnalysis: { type: String, default: "" },
   createdAt: { type: Date, default: Date.now }
 });
 

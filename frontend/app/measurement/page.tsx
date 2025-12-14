@@ -33,13 +33,12 @@ function CustomInput({ label, description, value, onChange, placeholder, autoFoc
 
 function CustomTextArea({ label, description, value, onChange, placeholder, autoFocus }: any) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 h-full flex flex-col">
             <h3 className="text-2xl font-bold">{label}</h3>
             <p className="text-muted-foreground">{description}</p>
             <textarea
                 autoFocus={autoFocus}
-                className="w-full bg-accent/30 border border-input rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-primary outline-none transition-all resize-none"
-                rows={5}
+                className="w-full flex-1 bg-accent/30 border border-input rounded-xl px-4 py-4 text-lg focus:ring-2 focus:ring-primary outline-none transition-all resize-none min-h-[200px]"
                 placeholder={placeholder}
                 value={value || ''}
                 onChange={e => onChange(e.target.value)}
@@ -59,6 +58,9 @@ function MeasurementContent() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [lastAnalyzedState, setLastAnalyzedState] = useState<string | null>(null);
+    const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
 
     // Initial Load
     useEffect(() => {
@@ -70,7 +72,17 @@ function MeasurementContent() {
         fetch(endpoint, { headers })
             .then(res => res.ok ? res.json() : null)
             .then(data => {
-                if (data && Object.keys(data).length > 0) setFormData(data);
+                if (data && Object.keys(data).length > 0) {
+                    setFormData(data);
+                    if (data.aiAnalysis) {
+                        setAnalysisResult(data.aiAnalysis);
+                        const url = generatePDF(data.aiAnalysis, false);
+                        setPdfUrl(url);
+                        // Mark as analyzed with current state
+                        const { aiAnalysis, ...rest } = data;
+                        setLastAnalyzedState(JSON.stringify(rest));
+                    }
+                }
             })
             .catch(() => { });
     }, [token, id]);
@@ -94,6 +106,123 @@ function MeasurementContent() {
             if (redirect) router.push('/dashboard');
         } catch (e: any) {
             alert(`Failed to save: ${e.message}`);
+        }
+    }
+
+    // Helper to check if form is dirty compared to last analysis
+    const isFormDirty = () => {
+        if (!lastAnalyzedState) return true;
+
+        // Create current state snapshot excluding analysis
+        const { aiAnalysis, ...currentRest } = formData;
+        const currentState = JSON.stringify(currentRest);
+        return currentState !== lastAnalyzedState;
+    }
+
+    const startAnalysis = async () => {
+        // If we have an existing analysis and the form hasn't changed, just show it
+        if (pdfUrl && !isFormDirty()) {
+            setShowModal(true);
+            return;
+        }
+
+        // If we have an analysis but form changed, ask for confirmation
+        if (pdfUrl && isFormDirty()) {
+            setShowOverwriteConfirm(true);
+            return;
+        }
+
+        // Otherwise start fresh analysis
+        await performAnalysis();
+    }
+
+    // AI Analysis Logic
+    const performAnalysis = async () => {
+        setIsAnalyzing(true);
+        setShowModal(true);
+        setShowOverwriteConfirm(false); // Close confirm if open
+
+        const prompt = `
+            Analyze this ISO 15939 Plan:
+            1. Info Need: ${formData.infoNeed}
+            2. Concept: ${formData.measurableConcept}
+            3. Entity: ${formData.entity}
+            4. Attribute: ${formData.attribute}
+            5. Base Measure: ${formData.baseMeasure}
+            6. Derived Measure: ${formData.derivedMeasure}
+            7. Indicator: ${formData.indicator}
+            
+            Provide:
+            ## Analysis
+            [Strengths/Weaknesses]
+            ## Compliance
+            [Check measurability]
+            ## Recommendations
+            [Improvements]
+        `;
+
+        try {
+            const res = await fetch('/api/ai/analyze', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt })
+            });
+
+            if (!res.ok) throw new Error("AI Service Unavailable");
+            const result = await res.json();
+            const aiText = result.candidates[0].content.parts[0].text;
+            setAnalysisResult(aiText);
+
+            // Save to form data specific field
+            setFormData(prev => ({ ...prev, aiAnalysis: aiText }));
+
+            // Update last analyzed state
+            const { aiAnalysis, ...rest } = formData;
+            setLastAnalyzedState(JSON.stringify(rest));
+
+            // Generate PDF Blob for Preview
+            const url = generatePDF(aiText, false);
+            setPdfUrl(url);
+
+        } catch (e: any) {
+            setAnalysisResult(`Error: ${e.message}`);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    }
+
+    const generatePDF = (text: string, download = false) => {
+        if (!text) return null;
+        const doc = new jsPDF();
+        const MARGIN_LEFT = 20;
+        const PAGE_HEIGHT = doc.internal.pageSize.height;
+        let yPos = 30;
+
+        // Header
+        doc.setFillColor(41, 128, 185); // Blue header
+        doc.rect(0, 0, 210, 15, 'F');
+        doc.setFontSize(22);
+        doc.setTextColor(255, 255, 255);
+        doc.text("AI Quality Analysis Report", 105, 10, { align: "center" });
+
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+
+        const lines = doc.splitTextToSize(text, 170);
+        lines.forEach((line: string) => {
+            if (yPos > PAGE_HEIGHT - 20) {
+                doc.addPage();
+                yPos = 20;
+            }
+            doc.text(line, MARGIN_LEFT, yPos);
+            yPos += 7;
+        });
+
+        if (download) {
+            doc.save("ISO15939_AI_Analysis.pdf");
+            return null;
+        } else {
+            return doc.output('bloburl').toString();
         }
     }
 
@@ -200,17 +329,47 @@ function MeasurementContent() {
         {
             title: "Summary",
             component: (
-                <div className="space-y-6">
+                <div className="space-y-6 h-full flex flex-col">
                     <h3 className="text-2xl font-bold">Review Your Plan</h3>
-                    <div className="bg-card border border-border rounded-xl p-6 space-y-4 max-h-[50vh] overflow-y-auto">
-                        {Object.keys(formData).map(key => (
-                            <div key={key} className="border-b border-border/50 pb-2 last:border-0">
-                                <span className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
-                                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                                </span>
-                                <p className="text-sm font-medium">{formData[key] || "Not specified"}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 min-h-[400px]">
+                        <div className="bg-card border border-border rounded-xl p-6 space-y-4 overflow-y-auto max-h-[600px]">
+                            {FIELDS.map(key => (
+                                <div key={key} className="border-b border-border/50 pb-2 last:border-0">
+                                    <span className="text-xs text-muted-foreground uppercase tracking-wide block mb-1">
+                                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                                    </span>
+                                    <p className="text-sm font-medium">{formData[key] || "Not Specified"}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Summary View PDF Display */}
+                        <div className="bg-neutral-100 rounded-xl overflow-hidden border border-border flex flex-col">
+                            <div className="bg-neutral-200 px-4 py-2 border-b border-neutral-300 flex justify-between items-center">
+                                <span className="text-xs font-bold text-neutral-600 uppercase tracking-wider">AI Analysis Report</span>
+                                {formData.aiAnalysis && (
+                                    <button
+                                        onClick={() => generatePDF(formData.aiAnalysis || "", true)}
+                                        className="text-xs text-primary hover:underline font-bold"
+                                    >
+                                        Download PDF
+                                    </button>
+                                )}
                             </div>
-                        ))}
+                            {formData.aiAnalysis ? (
+                                <iframe
+                                    src={generatePDF(formData.aiAnalysis, false) || ""}
+                                    className="w-full flex-1 min-h-[400px]"
+                                    title="AI Report Summary"
+                                />
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-muted-foreground space-y-4">
+                                    <div className="text-4xl">🤖</div>
+                                    <p>No analysis generated yet.</p>
+                                    <p className="text-sm">Click "Analyze with AI" to generate a report.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )
@@ -232,62 +391,40 @@ function MeasurementContent() {
         }
     };
 
-    // AI Analysis Logic
-    const analyzeAI = async () => {
-        setIsAnalyzing(true);
-        setShowModal(true);
-
-        const prompt = `
-            Analyze this ISO 15939 Plan:
-            1. Info Need: ${formData.infoNeed}
-            2. Concept: ${formData.measurableConcept}
-            3. Entity: ${formData.entity}
-            4. Attribute: ${formData.attribute}
-            5. Base Measure: ${formData.baseMeasure}
-            6. Derived Measure: ${formData.derivedMeasure}
-            7. Indicator: ${formData.indicator}
-            
-            Provide:
-            ## Analysis
-            [Strengths/Weaknesses]
-            ## Compliance
-            [Check measurability]
-            ## Recommendations
-            [Improvements]
-        `;
-
-        try {
-            const res = await fetch('/api/ai/analyze', {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt })
-            });
-
-            if (!res.ok) throw new Error("AI Service Unavailable");
-            const result = await res.json();
-            const aiText = result.candidates[0].content.parts[0].text;
-            setAnalysisResult(aiText);
-
-            // Simple PDF gen reuse if needed, or just download text
-        } catch (e: any) {
-            setAnalysisResult(`Error: ${e.message}`);
-        } finally {
-            setIsAnalyzing(false);
-        }
-    }
 
     return (
-        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-4xl mx-auto flex flex-col">
-            <header className="mb-8 text-center space-y-2">
+        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto flex flex-col">
+            <header className="mb-6 text-center space-y-6">
                 <h1 className="text-3xl font-bold">Measurement Wizard</h1>
-                <p className="text-muted-foreground">Step {currentStep + 1} of {steps.length}</p>
-                {/* Progress Bar */}
-                <div className="h-1 bg-accent rounded-full max-w-xs mx-auto overflow-hidden mt-4">
-                    <motion.div
-                        className="h-full bg-primary"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-                    />
+
+                {/* 7 Equal Boxes Interactive Progress Bar */}
+                <div className="grid grid-cols-7 gap-1 max-w-6xl mx-auto w-full px-2">
+                    {steps.map((s, idx) => {
+                        let bgClass = "bg-neutral-900 text-neutral-500 border border-neutral-800"; // Default
+
+                        if (currentStep === idx) {
+                            bgClass = "bg-primary text-primary-foreground shadow-lg scale-105 ring-2 ring-offset-2 ring-primary z-10 border-primary";
+                        } else if (idx < currentStep) {
+                            bgClass = "bg-primary/40 text-primary-foreground/90 border-primary/40";
+                        }
+
+                        return (
+                            <button
+                                key={idx}
+                                onClick={() => setCurrentStep(idx)}
+                                className={`
+                                    h-20 rounded-lg transition-all duration-300 flex flex-col items-center justify-center p-1
+                                    hover:opacity-90 hover:scale-105 transform
+                                    ${bgClass}
+                                `}
+                            >
+                                <span className="text-lg font-bold leading-none mb-1">{idx + 1}</span>
+                                <span className="text-[10px] md:text-xs font-medium leading-tight text-center line-clamp-2 px-1">
+                                    {s.title}
+                                </span>
+                            </button>
+                        )
+                    })}
                 </div>
             </header>
 
@@ -299,7 +436,7 @@ function MeasurementContent() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                         transition={{ duration: 0.2 }}
-                        className="bg-card border border-border rounded-2xl p-8 shadow-lg"
+                        className="bg-card border border-border rounded-2xl p-8 shadow-lg h-full"
                     >
                         {currentStepData.component}
                     </motion.div>
@@ -319,10 +456,10 @@ function MeasurementContent() {
                 {isLastStep ? (
                     <div className="flex gap-3">
                         <button
-                            onClick={analyzeAI}
-                            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-lg transition-transform hover:scale-105"
+                            onClick={startAnalysis}
+                            className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-2"
                         >
-                            ✨ Analyze with AI
+                            <span>Analyze with AI</span>
                         </button>
                         <button
                             onClick={() => saveDraft(true)}
@@ -341,7 +478,45 @@ function MeasurementContent() {
                 )}
             </div>
 
-            {/* AI Modal */}
+            {/* Overwrite Confirmation Modal (Small) */}
+            <AnimatePresence>
+                {showOverwriteConfirm && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+                            className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-xl space-y-4"
+                        >
+                            <h3 className="text-xl font-bold text-destructive">Plan Changed!</h3>
+                            <p className="text-muted-foreground">
+                                You modified your input since the last analysis.
+                            </p>
+                            <div className="flex flex-col gap-3 pt-2">
+                                <button
+                                    onClick={performAnalysis}
+                                    className="w-full py-3 bg-destructive text-destructive-foreground font-bold rounded-xl"
+                                >
+                                    Overwrite & Generate New Report
+                                </button>
+                                <button
+                                    onClick={() => saveDraft(true)}
+                                    className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl"
+                                >
+                                    Save Current & Start New
+                                </button>
+                                <button
+                                    onClick={() => setShowOverwriteConfirm(false)}
+                                    className="w-full py-3 border border-border rounded-xl font-medium hover:bg-accent"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+
+            {/* AI Modal (Large) */}
             <AnimatePresence>
                 {showModal && (
                     <motion.div
@@ -355,19 +530,43 @@ function MeasurementContent() {
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-card border border-border rounded-3xl p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+                            className="bg-card border border-border rounded-3xl p-8 max-w-7xl w-full h-[90vh] flex flex-col shadow-2xl"
                             onClick={e => e.stopPropagation()}
                         >
-                            <h2 className="text-2xl font-bold mb-4">AI Analysis Report</h2>
-                            <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap">
-                                {isAnalyzing ? "Analyzing your plan..." : analysisResult}
+                            <h2 className="text-2xl font-bold mb-4 flex justify-between">
+                                <span>AI Analysis Report</span>
+                                <button onClick={() => setShowModal(false)}>✕</button>
+                            </h2>
+
+                            <div className="flex-1 bg-neutral-100 rounded-xl overflow-hidden border border-border">
+                                {isAnalyzing ? (
+                                    <div className="flex flex-col items-center justify-center h-full space-y-4">
+                                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-muted-foreground animate-pulse">Consulting Expert System...</p>
+                                    </div>
+                                ) : pdfUrl ? (
+                                    <iframe src={pdfUrl} className="w-full h-full" title="PDF Report"></iframe>
+                                ) : (
+                                    <p className="p-8 text-center text-red-500">Failed to generate report.</p>
+                                )}
                             </div>
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="mt-6 w-full py-3 bg-secondary hover:bg-secondary/80 rounded-xl font-medium"
-                            >
-                                Close
-                            </button>
+
+                            <div className="mt-6 flex gap-4 justify-end">
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="px-6 py-3 border border-border rounded-xl font-medium hover:bg-accent transition-colors"
+                                >
+                                    Close
+                                </button>
+                                {pdfUrl && (
+                                    <button
+                                        onClick={() => generatePDF(analysisResult || "", true)}
+                                        className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold shadow-md hover:scale-105 transition-transform"
+                                    >
+                                        ⬇️ Download PDF
+                                    </button>
+                                )}
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
